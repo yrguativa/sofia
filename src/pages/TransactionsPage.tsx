@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react'
 import { Sheet } from '../components/Sheet'
 import { TransactionForm } from '../components/TransactionForm'
 import { TransactionRow } from '../components/TransactionRow'
-import { Empty, ErrorText, Loading, PageHeader, primaryBtn, secondaryBtn } from '../components/ui'
+import { Empty, ErrorText, Loading, MonthSwitcher, PageHeader, primaryBtn } from '../components/ui'
 import { listAccounts, listCategories, getProfile, listTransactions } from '../lib/db'
 import { dayLabel, currentMonth, monthLabel, monthRange, shiftMonth } from '../lib/format'
 import { useLoad } from '../lib/useLoad'
@@ -47,20 +47,12 @@ export function TransactionsPage() {
         }
       />
 
-      <div className="mb-6 flex items-center justify-between rounded-xl bg-white px-2 py-2 shadow-sm">
-        <button type="button" onClick={() => setMes(shiftMonth(mes, -1))} className={`${secondaryBtn} px-3`}>
-          ‹
-        </button>
-        <span className="font-semibold text-slate-900">{monthLabel(mes)}</span>
-        <button
-          type="button"
-          onClick={() => setMes(shiftMonth(mes, 1))}
-          disabled={mes >= currentMonth()}
-          className={`${secondaryBtn} px-3`}
-        >
-          ›
-        </button>
-      </div>
+      <MonthSwitcher
+        label={monthLabel(mes)}
+        onPrev={() => setMes(shiftMonth(mes, -1))}
+        onNext={() => setMes(shiftMonth(mes, 1))}
+        canNext={mes < currentMonth()}
+      />
 
       {error && <ErrorText>{error}</ErrorText>}
       {!data && !error && <Loading />}
@@ -75,11 +67,9 @@ export function TransactionsPage() {
 
       {data &&
         [...grupos.entries()].map(([fecha, items]) => (
-          <section key={fecha} className="mb-5">
-            <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
-              {dayLabel(fecha)}
-            </h2>
-            <div className="flex flex-col gap-2">
+          <section key={fecha} className="mb-6">
+            <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-zinc-500">{dayLabel(fecha)}</h2>
+            <div className="flex flex-col gap-3">
               {items.map((t) => (
                 <TransactionRow
                   key={t.id}

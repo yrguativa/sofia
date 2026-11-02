@@ -46,22 +46,28 @@ export function AccountsPage() {
         }
       />
 
-      <p className="mb-4 text-sm text-slate-500">
-        Patrimonio total: <span className="font-semibold text-slate-900">{formatMoney(total, data.profile.moneda)}</span>
-      </p>
+      <section className="mb-6 rounded-[28px] bg-ink p-6 text-white">
+        <p className="text-sm text-zinc-400">Patrimonio total</p>
+        <p className="mt-1 text-3xl font-bold tracking-tight text-acid">{formatMoney(total, data.profile.moneda)}</p>
+      </section>
 
       {data.accounts.length === 0 ? (
         <Empty>Crea tu primera cuenta: efectivo, banco, tarjeta o ahorro.</Empty>
       ) : (
-        <div className="flex flex-col gap-3">
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {data.accounts.map((a) => (
-            <button key={a.id} type="button" onClick={() => setEditing(a)} className="text-left">
+            <button key={a.id} type="button" onClick={() => setEditing(a)} className="text-left transition active:scale-[0.99]">
               <Card className="flex items-center justify-between p-4">
-                <div>
-                  <p className="font-medium text-slate-900">{a.nombre}</p>
-                  <p className="text-xs uppercase tracking-wide text-slate-500">{tipos.find((t) => t.value === a.tipo)?.label}</p>
+                <div className="flex items-center gap-3">
+                  <span className="h-11 w-11 rounded-2xl bg-acid" />
+                  <div>
+                    <p className="font-medium text-ink">{a.nombre}</p>
+                    <p className="text-xs uppercase tracking-wide text-zinc-500">
+                      {tipos.find((t) => t.value === a.tipo)?.label}
+                    </p>
+                  </div>
                 </div>
-                <p className="font-semibold text-slate-900">{formatMoney(balances[a.id] ?? 0, data.profile.moneda)}</p>
+                <p className="font-semibold text-ink">{formatMoney(balances[a.id] ?? 0, data.profile.moneda)}</p>
               </Card>
             </button>
           ))}
