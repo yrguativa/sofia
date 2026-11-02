@@ -3,7 +3,7 @@ import { Sheet } from '../components/Sheet'
 import { TransactionForm } from '../components/TransactionForm'
 import { TransactionRow } from '../components/TransactionRow'
 import { Empty, ErrorText, Loading, MonthSwitcher, PageHeader, primaryBtn } from '../components/ui'
-import { listAccounts, listCategories, getProfile, listTransactions } from '../lib/db'
+import { listAccounts, listCategories, getProfile, listEntries, listTransactions } from '../lib/db'
 import { currentMonth, dayLabel, mesDePresupuesto, monthLabel, monthRange, shiftMonth } from '../lib/format'
 import { useLoad } from '../lib/useLoad'
 import type { Transaction } from '../lib/types'
@@ -17,18 +17,31 @@ export function TransactionsPage() {
   return <TransactionsContent mesInicial={mesDePresupuesto(new Date(), perfil.data.dia_pago)} />
 }
 
+function colorPresupuesto(cuenta: string | undefined) {
+  if (cuenta === undefined) return undefined
+  return cuenta === 'Bolsillo' ? 'amarillo' : 'verde'
+}
+
 function TransactionsContent({ mesInicial }: { mesInicial: string }) {
   const [mes, setMes] = useState(mesInicial)
   const [editing, setEditing] = useState<Transaction | 'new' | null>(null)
 
   const loader = useCallback(async () => {
-    const [profile, accounts, categories, transactions] = await Promise.all([
+    const [profile, accounts, categories, transactions, entries] = await Promise.all([
       getProfile(),
       listAccounts(),
       listCategories(),
       listTransactions(monthRange(mes)),
+      listEntries(mes),
     ])
-    return { profile, accounts, categories, transactions }
+    const nombreCuenta = new Map(accounts.map((a) => [a.id, a.nombre]))
+    const pagadosPresupuesto = new Map<string, string>()
+    for (const e of entries) {
+      if (e.transaction_id && e.cuenta_id) {
+        pagadosPresupuesto.set(e.transaction_id, nombreCuenta.get(e.cuenta_id) ?? '')
+      }
+    }
+    return { profile, accounts, categories, transactions, pagadosPresupuesto }
   }, [mes])
 
   const { data, error, reload } = useLoad(loader)
@@ -86,6 +99,7 @@ function TransactionsContent({ mesInicial }: { mesInicial: string }) {
                   accounts={data.accounts}
                   categories={data.categories}
                   moneda={data.profile.moneda}
+                  presupuesto={colorPresupuesto(data.pagadosPresupuesto.get(t.id))}
                   onClick={() => setEditing(t)}
                 />
               ))}

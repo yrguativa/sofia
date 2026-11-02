@@ -8,8 +8,15 @@ type Props = {
   accounts: Account[]
   categories: Category[]
   moneda: string
+  presupuesto?: 'verde' | 'amarillo'
   onClick?: () => void
 }
+
+const fondos = {
+  neutro: 'bg-white',
+  verde: 'bg-emerald-50 ring-1 ring-emerald-200',
+  amarillo: 'bg-amber-50 ring-1 ring-amber-200',
+} as const
 
 const estilos = {
   ingreso: 'bg-emerald-50 text-emerald-700',
@@ -17,7 +24,7 @@ const estilos = {
   transferencia: 'bg-mist text-zinc-600',
 } as const
 
-export function TransactionRow({ tx, accounts, categories, moneda, onClick }: Props) {
+export function TransactionRow({ tx, accounts, categories, moneda, presupuesto, onClick }: Props) {
   const cat = categories.find((c) => c.id === tx.category_id)
   const origen = accounts.find((a) => a.id === tx.account_id)
   const destino = accounts.find((a) => a.id === tx.cuenta_destino_id)
@@ -32,7 +39,7 @@ export function TransactionRow({ tx, accounts, categories, moneda, onClick }: Pr
     <button
       type="button"
       onClick={onClick}
-      className="group flex w-full items-center gap-3 rounded-[22px] bg-white p-3 pr-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md active:scale-[0.99]"
+      className={`group flex w-full items-center gap-3 rounded-[22px] p-3 pr-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md active:scale-[0.99] ${fondos[presupuesto ?? 'neutro']}`}
     >
       <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${estilos[tx.tipo]}`}>
         <Icon className="h-5 w-5">{tipoMovimientoIcon[tx.tipo]}</Icon>
