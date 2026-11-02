@@ -21,13 +21,16 @@ import {
 } from '../components/ui'
 import {
   deleteEntry,
+  deleteIngresoAdicional,
   generarMes,
   getProfile,
   getSalario,
   listAccounts,
   listCategories,
+  listIngresosAdicionales,
   listEntries,
   listPlanItems,
+  saveIngresoAdicional,
   saveSalario,
   setEntryStatus,
   updateEntry,
@@ -58,19 +61,21 @@ function BudgetsContent({ mesInicial }: { mesInicial: string }) {
   const [colapsadas, setColapsadas] = useState<Set<string>>(new Set())
   const [editing, setEditing] = useState<BudgetEntry | null>(null)
   const [pagando, setPagando] = useState<BudgetEntry | null>(null)
+  const [ingresoSheet, setIngresoSheet] = useState(false)
   const [aviso, setAviso] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
 
   const loader = useCallback(async () => {
-    const [profile, accounts, salario, entries, planItems, categories] = await Promise.all([
+    const [profile, accounts, salario, entries, planItems, categories, ingresosAdicionales] = await Promise.all([
       getProfile(),
       listAccounts(),
       getSalario(mes),
       listEntries(mes),
       listPlanItems(),
       listCategories(),
+      listIngresosAdicionales(mes),
     ])
-    return { profile, accounts, salario, entries, planItems, categories }
+    return { profile, accounts, salario, entries, planItems, categories, ingresosAdicionales }
   }, [mes])
 
   const { data, error, reload } = useLoad(loader)
@@ -128,7 +133,9 @@ function BudgetsContent({ mesInicial }: { mesInicial: string }) {
 
   const moneda = data.profile.moneda
   const salario = data.salario ?? 0
-  const resumen = resumenPresupuesto(salario, data.entries)
+  const totalAdicionales = (data.ingresosAdicionales ?? []).reduce((s, i) => s + Number(i.monto), 0)
+  const salarioParaResumen = salario + totalAdicionales
+  const resumen = resumenPresupuesto(salarioParaResumen, data.entries)
 
   return (
     <>
@@ -153,6 +160,40 @@ function BudgetsContent({ mesInicial }: { mesInicial: string }) {
         salario={salario}
         onSave={(valor) => run(() => saveSalario(mes, valor))}
       />
+
+      <Card className="mb-4 p-4">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-xs text-zinc-500">Ingresos adicionales del mes</p>
+            <p className="text-xl font-semibold text-ink">{formatMoney(totalAdicionales, moneda)}</p>
+          </div>
+          <button type="button" onClick={() => setIngresoSheet(true)} className={secondaryBtn}>
+            + Agregar
+          </button>
+        </div>
+        {data.ingresosAdicionales && data.ingresosAdicionales.length > 0 && (
+          <div className="mt-3 flex flex-col gap-2">
+            {data.ingresosAdicionales.map((i) => (
+              <div key={i.id} className="flex items-center justify-between text-sm">
+                <span className="text-ink">{i.nombre}</span>
+                <div className="flex items-center gap-2">
+                  <span className="font-medium text-ink">{formatMoney(Number(i.monto), moneda)}</span>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      await deleteIngresoAdicional(i.id)
+                      reload()
+                    }}
+                    className="text-red-600"
+                  >
+                    <Icon className="h-3.5 w-3.5">{icons.eliminar}</Icon>
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
 
       <div className="mb-6 flex flex-col gap-2">
         <button type="button" onClick={generar} className={primaryBtn}>
@@ -319,6 +360,18 @@ function BudgetsContent({ mesInicial }: { mesInicial: string }) {
             </section>
           )
         })
+      )}
+
+      {ingresoSheet && (
+        <Sheet title="Nuevo ingreso adicional" onClose={() => setIngresoSheet(false)}>
+          <IngresoRapidoForm
+            mes={mes}
+            onSaved={() => {
+              setIngresoSheet(false)
+              reload()
+            }}
+          />
+        </Sheet>
       )}
 
       {pagando && (
@@ -702,6 +755,44 @@ function EntryForm({
       </button>
       <button type="button" onClick={handleDelete} disabled={saving} className={dangerBtn}>
         Quitar de este mes
+      </button>
+    </form>
+  )
+}
+
+function IngresoRapidoForm({ mes, onSaved }: { mes: string; onSaved: () => void }) {
+  const [nombre, setNombre] = useState('')
+  const [monto, setMonto] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    setError(null)
+    const n = parseMoney(monto)
+    if (!(n > 0)) return setError('El monto debe ser mayor que cero.')
+    if (!nombre.trim()) return setError('El nombre es obligatorio.')
+    setSaving(true)
+    try {
+      await saveIngresoAdicional(mes, nombre, n)
+      onSaved()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No se pudo guardar.')
+      setSaving(false)
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      <Field label="Nombre">
+        <input value={nombre} onChange={(e) => setNombre(e.target.value)} maxLength={60} className={inputCls} required />
+      </Field>
+      <Field label="Monto">
+        <MoneyInput value={monto} onChange={setMonto} className={inputCls} required />
+      </Field>
+      {error && <ErrorText>{error}</ErrorText>}
+      <button type="submit" disabled={saving} className={primaryBtn}>
+        {saving ? 'Guardando…' : 'Guardar'}
       </button>
     </form>
   )

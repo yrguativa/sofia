@@ -231,6 +231,25 @@ export async function deleteSalarioHistorial(id: string) {
 }
 
 
+export async function listIngresosAdicionales(mes: string) {
+  return unwrap<Array<{ id: string; mes: string; nombre: string; monto: number }>>(
+    await supabase
+      .from('ingresos_adicionales')
+      .select('id,mes,nombre,monto')
+      .eq('mes', `${mes}-01`)
+      .order('creado_en', { ascending: false }),
+  ).map((r) => ({ ...r, monto: Number(r.monto) }))
+}
+
+export async function saveIngresoAdicional(mes: string, nombre: string, monto: number) {
+  const user_id = await currentUserId()
+  check(await supabase.from('ingresos_adicionales').insert({ user_id, mes: `${mes}-01`, nombre: nombre.trim(), monto }))
+}
+
+export async function deleteIngresoAdicional(id: string) {
+  check(await supabase.from('ingresos_adicionales').delete().eq('id', id))
+}
+
 export async function listShortcuts() {
   const rows = unwrap<Array<{ id: string; nombre: string; cuenta_id: string | null; ultimo_uso: string | null; cuenta: { nombre: string } | null }>>(
     await supabase

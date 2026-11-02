@@ -18,6 +18,7 @@ import { SimulatorPage } from './pages/SimulatorPage'
 import { DebtsPage } from './pages/DebtsPage'
 import { DebtDetailPage } from './pages/DebtDetailPage'
 import { SalarioPage } from './pages/SalarioPage'
+import { IngresosPage } from './pages/IngresosPage'
 import { AtajosPage } from './pages/AtajosPage'
 import { ResetPasswordPage } from './pages/ResetPasswordPage'
 import { PlanPage } from './pages/PlanPage'
@@ -62,6 +63,7 @@ export default function App() {
             <Route path="plantilla" element={<PlanPage />} />
             <Route path="simulador" element={<SimulatorPage />} />
             <Route path="salario" element={<SalarioPage />} />
+            <Route path="ingresos" element={<IngresosPage />} />
             <Route path="deudas" element={<DebtsPage />} />
             <Route path="deudas/:id" element={<DebtDetailPage />} />
             <Route path="atajos" element={<AtajosPage />} />
