@@ -54,7 +54,7 @@ export function DashboardPage() {
   const altura = (valor: number) => `${Math.max(4, (valor / maximo) * 100)}%`
 
   return (
-    <div className="grid gap-6 lg:grid-cols-12">
+    <div className="grid gap-4 lg:gap-6 lg:grid-cols-12">
       <header className="flex items-center gap-3 lg:col-span-12">
         <span className="flex h-12 w-12 items-center justify-center rounded-full bg-acid text-lg font-bold text-ink">
           {inicial}
@@ -86,7 +86,7 @@ export function DashboardPage() {
 
       <Card className="lg:col-span-5">
         <SectionTitle title="Accesos rápidos" />
-        <nav className="grid grid-cols-4 gap-3">
+        <nav className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {acciones.map((a) => (
             <Link key={a.to} to={a.to} className="flex flex-col items-center gap-2 text-center text-xs font-medium text-ink">
               <span className="flex h-14 w-14 items-center justify-center rounded-full bg-mist text-ink transition hover:bg-acid active:scale-95">
@@ -110,7 +110,7 @@ export function DashboardPage() {
             </span>
           </div>
         </div>
-        <div className="flex h-40 items-end justify-between gap-2 lg:h-64 lg:gap-4">
+        <div className="flex h-28 items-end justify-between gap-1 lg:h-64 lg:gap-4">
           {serie.map((s) => (
             <div key={s.mes} className="flex h-full flex-1 flex-col items-center justify-end gap-2">
               <div className="flex h-full w-full items-end justify-center gap-1.5">
@@ -130,7 +130,7 @@ export function DashboardPage() {
             Aún no tienes cuentas. <Link to="/cuentas" className="font-medium text-ink underline">Crea una</Link>.
           </Empty>
         ) : (
-          <div className="-mx-5 flex gap-3 overflow-x-auto px-5 pb-1 lg:mx-0 lg:flex-col lg:overflow-visible lg:px-0">
+          <div className="flex flex-col gap-3 lg:flex-col">
             {accounts.map((a) => (
               <div key={a.id} className="min-w-44 shrink-0 rounded-[24px] bg-white p-5 shadow-sm lg:flex lg:min-w-0 lg:items-center lg:justify-between">
                 <div className="flex items-center gap-3">

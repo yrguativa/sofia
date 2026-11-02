@@ -47,7 +47,7 @@ export function AppShell() {
       </div>
 
       <nav className="fixed inset-x-0 bottom-5 z-40 px-5 pb-[env(safe-area-inset-bottom)] lg:hidden">
-        <div className="mx-auto flex max-w-md items-center justify-around rounded-full bg-ink p-1.5 shadow-2xl">
+        <div className="mx-auto flex max-w-md items-center justify-between gap-1 rounded-full bg-ink p-1.5 shadow-2xl">
           {tabs.map((t) => (
             <NavLink
               key={t.to}
