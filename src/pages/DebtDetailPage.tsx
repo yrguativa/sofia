@@ -197,7 +197,7 @@ export function DebtDetailPage() {
                 const pagado = pagados.has(a.mes) || a.mes <= Math.floor((debt.monto_total - debt.saldo_pendiente) / debt.cuota_mensual)
                 return (
                   <tr key={a.mes} className={`border-b border-zinc-100 ${pagado ? 'bg-emerald-50' : ''}`}>
-                    <td className="py-2">{mesDeuda(debt.fecha_inicio, a.mes)}</td>
+                    <td className="py-2">{a.mes}: {mesDeuda(debt.fecha_inicio, a.mes)}</td>
                     <td className="py-2 text-right">{formatMoney(a.cuota, moneda)}</td>
                     <td className="py-2 text-right">{formatMoney(a.capital, moneda)}</td>
                     <td className="py-2 text-right">{formatMoney(a.interes, moneda)}</td>
