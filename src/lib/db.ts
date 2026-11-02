@@ -32,10 +32,10 @@ async function currentUserId(): Promise<string> {
 }
 
 export async function getProfile(): Promise<Profile> {
-  return unwrap<Profile>(await supabase.from('profiles').select('id,nombre,moneda').single())
+  return unwrap<Profile>(await supabase.from('profiles').select('id,nombre,moneda,dia_pago').single())
 }
 
-export async function updateProfile(patch: { nombre?: string; moneda?: string }) {
+export async function updateProfile(patch: { nombre?: string; moneda?: string; dia_pago?: number }) {
   const id = await currentUserId()
   check(await supabase.from('profiles').update(patch).eq('id', id))
 }

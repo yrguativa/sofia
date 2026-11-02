@@ -6,6 +6,7 @@ export type Profile = {
   id: string
   nombre: string | null
   moneda: string
+  dia_pago: number
 }
 
 export type Account = {
