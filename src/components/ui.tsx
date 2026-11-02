@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
-import { Icon, icons } from './icons'
+import { Icon } from './icons'
+import { icons } from './iconPaths'
 
 export const inputCls =
   'w-full rounded-2xl border border-transparent bg-mist px-4 py-3.5 text-base text-ink outline-none transition placeholder:text-zinc-400 focus:border-ink focus:bg-white'

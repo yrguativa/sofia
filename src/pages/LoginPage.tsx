@@ -1,7 +1,8 @@
 import { useState, type FormEvent } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../auth/AuthContext'
-import { Icon, icons } from '../components/icons'
+import { Icon } from '../components/icons'
+import { icons } from '../components/iconPaths'
 import { AuthScreen, Field, inputCls, primaryBtn } from '../components/ui'
 
 type Mode = 'login' | 'signup'

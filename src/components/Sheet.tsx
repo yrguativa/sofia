@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
-import { Icon, icons } from './icons'
+import { Icon } from './icons'
+import { icons } from './iconPaths'
 
 export function Sheet({ title, onClose, children }: { title: string; onClose: () => void; children: ReactNode }) {
   return (

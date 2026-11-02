@@ -1,6 +1,7 @@
 import { NavLink, Outlet } from 'react-router-dom'
 import { Brand } from './ui'
-import { Icon, icons } from './icons'
+import { Icon } from './icons'
+import { icons } from './iconPaths'
 
 const tabs = [
   { to: '/', label: 'Inicio', end: true, icon: icons.home },
