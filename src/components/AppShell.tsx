@@ -8,6 +8,7 @@ const tabs = [
   { to: '/movimientos', label: 'Movimientos', end: false, icon: icons.movimientos },
   { to: '/presupuestos', label: 'Presupuestos', end: false, icon: icons.presupuestos },
   { to: '/metas', label: 'Metas', end: false, icon: icons.metas },
+  { to: '/deudas', label: 'Deudas', end: false, icon: icons.tarjeta },
   { to: '/mas', label: 'Más', end: false, icon: icons.mas },
 ]
 
