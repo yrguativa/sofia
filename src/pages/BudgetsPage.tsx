@@ -26,12 +26,21 @@ import {
   updateEntry,
 } from '../lib/db'
 import { montoDesde, resumenPresupuesto } from '../lib/presupuesto'
-import { currentMonth, formatMoney, monthLabel, shiftMonth } from '../lib/format'
+import { currentMonth, formatMoney, mesDePresupuesto, monthLabel, shiftMonth } from '../lib/format'
 import { useLoad } from '../lib/useLoad'
 import { grupos, type BudgetEntry, type MontoTipo } from '../lib/types'
 
 export function BudgetsPage() {
-  const [mes, setMes] = useState(currentMonth())
+  const perfil = useLoad(getProfile)
+
+  if (perfil.error) return <ErrorText>{perfil.error}</ErrorText>
+  if (!perfil.data) return <Loading />
+
+  return <BudgetsContent mesInicial={mesDePresupuesto(new Date(), perfil.data.dia_pago)} />
+}
+
+function BudgetsContent({ mesInicial }: { mesInicial: string }) {
+  const [mes, setMes] = useState(mesInicial)
   const [editing, setEditing] = useState<BudgetEntry | null>(null)
   const [aviso, setAviso] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)

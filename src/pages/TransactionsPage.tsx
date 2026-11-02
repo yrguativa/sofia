@@ -4,12 +4,21 @@ import { TransactionForm } from '../components/TransactionForm'
 import { TransactionRow } from '../components/TransactionRow'
 import { Empty, ErrorText, Loading, MonthSwitcher, PageHeader, primaryBtn } from '../components/ui'
 import { listAccounts, listCategories, getProfile, listTransactions } from '../lib/db'
-import { dayLabel, currentMonth, monthLabel, monthRange, shiftMonth } from '../lib/format'
+import { currentMonth, dayLabel, mesDePresupuesto, monthLabel, monthRange, shiftMonth } from '../lib/format'
 import { useLoad } from '../lib/useLoad'
 import type { Transaction } from '../lib/types'
 
 export function TransactionsPage() {
-  const [mes, setMes] = useState(currentMonth())
+  const perfil = useLoad(getProfile)
+
+  if (perfil.error) return <ErrorText>{perfil.error}</ErrorText>
+  if (!perfil.data) return <Loading />
+
+  return <TransactionsContent mesInicial={mesDePresupuesto(new Date(), perfil.data.dia_pago)} />
+}
+
+function TransactionsContent({ mesInicial }: { mesInicial: string }) {
+  const [mes, setMes] = useState(mesInicial)
   const [editing, setEditing] = useState<Transaction | 'new' | null>(null)
 
   const loader = useCallback(async () => {
