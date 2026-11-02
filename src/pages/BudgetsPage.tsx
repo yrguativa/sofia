@@ -1,6 +1,7 @@
 import { useCallback, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { Sheet } from '../components/Sheet'
+import { MoneyInput } from '../components/MoneyInput'
 import { Icon } from '../components/icons'
 import { icons, tipoCuentaIcon } from '../components/iconPaths'
 import { colorPorCuenta, fondosPago } from '../components/estadoPago'
@@ -30,6 +31,7 @@ import {
   updateEntry,
 } from '../lib/db'
 import { montoDesde, resumenPresupuesto } from '../lib/presupuesto'
+import { parseMoney } from '../lib/money'
 import { currentMonth, formatMoney, mesDePresupuesto, monthLabel, shiftMonth } from '../lib/format'
 import { useLoad } from '../lib/useLoad'
 import { grupos, type Account, type BudgetEntry, type MontoTipo } from '../lib/types'
@@ -260,7 +262,7 @@ function SalarioCard({ salario, onSave }: { salario: number; onSave: (valor: num
 
   function commit() {
     if (valor.trim() === String(salario)) return
-    const n = Number(valor.replace(',', '.'))
+    const n = parseMoney(valor)
     if (!(n >= 0)) {
       setError('El salario debe ser un número positivo.')
       return
@@ -273,10 +275,9 @@ function SalarioCard({ salario, onSave }: { salario: number; onSave: (valor: num
     <Card className="mb-4 p-4">
       <label className="flex flex-col gap-1 text-sm font-medium text-slate-700">
         Salario del mes
-        <input
-          inputMode="decimal"
+        <MoneyInput
           value={valor}
-          onChange={(e) => setValor(e.target.value)}
+          onChange={setValor}
           onBlur={commit}
           onKeyDown={(e) => {
             if (e.key === 'Enter') e.currentTarget.blur()
@@ -308,36 +309,44 @@ function EntryRow({
   const pagado = entry.transaction_id !== null
   const cuenta = accounts.find((a) => a.id === entry.cuenta_id)
   const color = pagado ? colorPorCuenta(cuenta?.nombre) : undefined
-  const detalle = entry.tipo_monto === 'porcentaje' ? `${entry.valor}% del salario` : 'Valor fijo'
 
   return (
-    <div className={`group flex flex-col gap-4 rounded-[22px] p-4 shadow-sm ${fondosPago[color ?? 'neutro']}`}>
-      <div className="flex items-start justify-between gap-3">
+    <div className={`group flex flex-col gap-2 rounded-[18px] p-3.5 shadow-sm ${fondosPago[color ?? 'neutro']}`}>
+      <div className="flex items-center justify-between gap-2">
         <button
           type="button"
           onClick={onEdit}
           disabled={pagado}
-          className="min-w-0 flex-1 text-left disabled:cursor-default"
+          className="min-w-0 truncate text-left font-medium text-ink disabled:cursor-default"
         >
-          <p className="truncate font-medium text-ink">{entry.nombre}</p>
-          <p className="text-xs text-zinc-500">{detalle}</p>
-          <span className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-white/70 px-2.5 py-1 text-xs font-medium text-ink">
-            <Icon className="h-3.5 w-3.5">
-              {pagado ? (cuenta ? tipoCuentaIcon[cuenta.tipo] : icons.check) : icons.pendiente}
-            </Icon>
-            {pagado ? (cuenta ? `Pagado desde ${cuenta.nombre}` : 'Pagado') : 'Pendiente'}
-          </span>
+          {entry.nombre}
         </button>
-        <p className="whitespace-nowrap font-semibold text-ink">{formatMoney(entry.monto, moneda)}</p>
+        <p className="whitespace-nowrap text-sm font-semibold text-ink">{formatMoney(entry.monto, moneda)}</p>
       </div>
-      <button
-        type="button"
-        onClick={onPagar}
-        className={`${pagado ? `${secondaryBtn} opacity-0 group-focus-within:opacity-100 group-hover:opacity-100` : primaryBtn} w-full gap-2 transition-opacity`}
-      >
-        <Icon className="h-4 w-4">{icons.salario}</Icon>
-        {pagado ? 'Cambiar pago' : 'Pagar'}
-      </button>
+      <div className="flex items-center justify-between gap-2">
+        <span className="inline-flex min-w-0 items-center gap-1.5 text-xs font-medium text-zinc-600">
+          <Icon className="h-3.5 w-3.5 shrink-0">
+            {pagado ? (cuenta ? tipoCuentaIcon[cuenta.tipo] : icons.check) : icons.pendiente}
+          </Icon>
+          <span className="truncate">{pagado ? (cuenta?.nombre ?? 'Pagado') : 'Pendiente'}</span>
+        </span>
+        {pagado ? (
+          <button
+            type="button"
+            onClick={onPagar}
+            aria-label="Cambiar pago"
+            title="Cambiar pago"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/80 text-ink opacity-0 transition group-focus-within:opacity-100 group-hover:opacity-100"
+          >
+            <Icon className="h-4 w-4">{icons.editar}</Icon>
+          </button>
+        ) : (
+          <button type="button" onClick={onPagar} className={`${primaryBtn} gap-1.5 px-3 py-1.5 text-xs`}>
+            <Icon className="h-3.5 w-3.5">{icons.salario}</Icon>
+            Pagar
+          </button>
+        )}
+      </div>
     </div>
   )
 }
@@ -457,7 +466,7 @@ function EntryForm({
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const numero = Number(valor.replace(',', '.'))
+  const numero = tipo === 'valor' ? parseMoney(valor) : Number(valor.replace(',', '.'))
   const monto = numero >= 0 ? montoDesde(tipo, numero, salario) : 0
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
@@ -502,7 +511,11 @@ function EntryForm({
       </div>
 
       <Field label={tipo === 'porcentaje' ? 'Porcentaje del salario (%)' : 'Valor'}>
-        <input inputMode="decimal" value={valor} onChange={(e) => setValor(e.target.value)} className={`${inputCls} text-xl font-semibold`} />
+        {tipo === 'valor' ? (
+          <MoneyInput value={valor} onChange={setValor} className={`${inputCls} text-xl font-semibold`} />
+        ) : (
+          <input inputMode="decimal" value={valor} onChange={(e) => setValor(e.target.value)} className={`${inputCls} text-xl font-semibold`} />
+        )}
       </Field>
 
       <p className="text-sm text-slate-600">

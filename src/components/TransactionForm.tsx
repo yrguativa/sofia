@@ -1,7 +1,9 @@
 import { useState, type FormEvent } from 'react'
 import { deleteTransaction, saveTransaction } from '../lib/db'
 import { todayISO } from '../lib/format'
+import { parseMoney } from '../lib/money'
 import type { Account, Category, Transaction, TxType } from '../lib/types'
+import { MoneyInput } from './MoneyInput'
 import { Field, dangerBtn, inputCls, primaryBtn } from './ui'
 
 type Props = {
@@ -34,7 +36,7 @@ export function TransactionForm({ accounts, categories, initial, onSaved }: Prop
     e.preventDefault()
     setError(null)
 
-    const valor = Number(monto.replace(',', '.'))
+    const valor = parseMoney(monto)
     if (!(valor > 0)) return setError('El monto debe ser mayor que cero.')
     if (!accountId) return setError('Crea una cuenta antes de registrar movimientos.')
     if (tipo === 'transferencia') {
@@ -95,10 +97,9 @@ export function TransactionForm({ accounts, categories, initial, onSaved }: Prop
       </div>
 
       <Field label="Monto">
-        <input
-          inputMode="decimal"
+        <MoneyInput
           value={monto}
-          onChange={(e) => setMonto(e.target.value)}
+          onChange={setMonto}
           placeholder="0"
           className={`${inputCls} text-2xl font-semibold`}
           required

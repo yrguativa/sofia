@@ -1,5 +1,6 @@
 import { useCallback, useState, type FormEvent } from 'react'
 import { Sheet } from '../components/Sheet'
+import { MoneyInput } from '../components/MoneyInput'
 import {
   Card,
   Empty,
@@ -11,6 +12,7 @@ import {
   inputCls,
   primaryBtn,
 } from '../components/ui'
+import { parseMoney } from '../lib/money'
 import { deletePlanItem, listCategories, listPlanItems, savePlanItem } from '../lib/db'
 import { useLoad } from '../lib/useLoad'
 import { grupos, type MontoTipo, type PlanItem } from '../lib/types'
@@ -118,7 +120,7 @@ function PlanItemForm({
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setError(null)
-    const numero = Number(valor.replace(',', '.'))
+    const numero = tipo === 'valor' ? parseMoney(valor) : Number(valor.replace(',', '.'))
     if (!(numero >= 0)) return setError('El valor debe ser un número positivo.')
     if (tipo === 'porcentaje' && numero > 100) return setError('El porcentaje no puede superar 100.')
 
@@ -201,7 +203,11 @@ function PlanItemForm({
         label={tipo === 'porcentaje' ? 'Porcentaje del salario (%)' : 'Valor (COP)'}
         hint={tipo === 'porcentaje' ? 'Ejemplo: 10 para el diezmo.' : undefined}
       >
-        <input inputMode="decimal" value={valor} onChange={(e) => setValor(e.target.value)} className={inputCls} required />
+        {tipo === 'valor' ? (
+          <MoneyInput value={valor} onChange={setValor} required />
+        ) : (
+          <input inputMode="decimal" value={valor} onChange={(e) => setValor(e.target.value)} className={inputCls} required />
+        )}
       </Field>
 
       <label className="flex items-center gap-3 text-sm font-medium text-slate-700">

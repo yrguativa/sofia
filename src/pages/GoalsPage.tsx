@@ -1,3 +1,5 @@
+import { MoneyInput } from '../components/MoneyInput'
+import { parseMoney } from '../lib/money'
 import { useCallback, useState, type FormEvent } from 'react'
 import { Sheet } from '../components/Sheet'
 import { Card, Empty, ErrorText, Field, Loading, PageHeader, ProgressBar, dangerBtn, inputCls, primaryBtn, secondaryBtn } from '../components/ui'
@@ -104,7 +106,7 @@ function GoalForm({ goal, onSaved }: { goal: Goal | null; onSaved: () => void })
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setError(null)
-    const obj = Number(objetivo.replace(',', '.'))
+    const obj = parseMoney(objetivo)
     if (!(obj > 0)) return setError('El objetivo debe ser mayor que cero.')
     setSaving(true)
     try {
@@ -143,7 +145,7 @@ function GoalForm({ goal, onSaved }: { goal: Goal | null; onSaved: () => void })
         <input value={nombre} onChange={(e) => setNombre(e.target.value)} maxLength={60} className={inputCls} required />
       </Field>
       <Field label="Objetivo">
-        <input inputMode="decimal" value={objetivo} onChange={(e) => setObjetivo(e.target.value)} className={inputCls} required />
+        <MoneyInput value={objetivo} onChange={setObjetivo} className={inputCls} required />
       </Field>
       <Field label="Fecha meta (opcional)">
         <input type="date" value={fechaMeta} onChange={(e) => setFechaMeta(e.target.value)} className={inputCls} />
@@ -170,7 +172,7 @@ function AportarForm({ goal, moneda, onSaved }: { goal: Goal; moneda: string; on
 
   async function aplicar(signo: 1 | -1) {
     setError(null)
-    const valor = Number(monto.replace(',', '.'))
+    const valor = parseMoney(monto)
     if (!(valor > 0)) return setError('Escribe un monto mayor que cero.')
     const nuevo = goal.ahorrado + signo * valor
     if (nuevo < 0) return setError('No puedes retirar más de lo ahorrado.')
@@ -190,7 +192,7 @@ function AportarForm({ goal, moneda, onSaved }: { goal: Goal; moneda: string; on
         Ahorrado: <span className="font-semibold text-ink">{formatMoney(goal.ahorrado, moneda)}</span>
       </p>
       <Field label="Monto">
-        <input inputMode="decimal" value={monto} onChange={(e) => setMonto(e.target.value)} className={`${inputCls} text-2xl font-semibold`} />
+        <MoneyInput value={monto} onChange={setMonto} className={`${inputCls} text-2xl font-semibold`} />
       </Field>
       {error && <p className="text-sm text-red-600" role="alert">{error}</p>}
       <div className="grid grid-cols-2 gap-3">

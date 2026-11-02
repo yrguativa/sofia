@@ -1,3 +1,5 @@
+import { MoneyInput } from '../components/MoneyInput'
+import { parseMoney } from '../lib/money'
 import { useCallback, useState, type FormEvent } from 'react'
 import { Sheet } from '../components/Sheet'
 import { Card, Empty, ErrorText, Field, Loading, PageHeader, dangerBtn, inputCls, primaryBtn } from '../components/ui'
@@ -96,7 +98,7 @@ function AccountForm({ account, onSaved }: { account: Account | null; onSaved: (
     setSaving(true)
     try {
       await saveAccount(
-        { nombre: nombre.trim(), tipo, saldo_inicial: Number(saldo.replace(',', '.')) || 0 },
+        { nombre: nombre.trim(), tipo, saldo_inicial: parseMoney(saldo) },
         account?.id,
       )
       onSaved()
@@ -134,7 +136,7 @@ function AccountForm({ account, onSaved }: { account: Account | null; onSaved: (
         </select>
       </Field>
       <Field label="Saldo inicial" hint="Saldo con el que empiezas a registrar movimientos.">
-        <input inputMode="decimal" value={saldo} onChange={(e) => setSaldo(e.target.value)} className={inputCls} />
+        <MoneyInput value={saldo} onChange={setSaldo} />
       </Field>
 
       {error && <p className="text-sm text-red-600" role="alert">{error}</p>}
