@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { computeBalances, summarize } from './finance'
-import { monthRange, shiftMonth } from './format'
+import { mesDePresupuesto, monthRange, shiftMonth } from './format'
 import type { Account, Transaction } from './types'
 
 const accounts: Account[] = [
@@ -49,6 +49,27 @@ describe('summarize', () => {
       tx({ tipo: 'transferencia', monto: 999, cuenta_destino_id: 'b' }),
     ])
     expect(result).toEqual({ ingresos: 1000, gastos: 250 })
+  })
+})
+
+describe('mesDePresupuesto', () => {
+  it('muestra el mes anterior antes del día de pago', () => {
+    expect(mesDePresupuesto(new Date(2026, 9, 2), 25)).toBe('2026-09')
+    expect(mesDePresupuesto(new Date(2026, 9, 24), 25)).toBe('2026-09')
+  })
+
+  it('muestra el mes actual desde el día de pago', () => {
+    expect(mesDePresupuesto(new Date(2026, 9, 25), 25)).toBe('2026-10')
+    expect(mesDePresupuesto(new Date(2026, 9, 30), 25)).toBe('2026-10')
+  })
+
+  it('ajusta el día de pago al último día de meses cortos', () => {
+    expect(mesDePresupuesto(new Date(2026, 1, 28), 31)).toBe('2026-02')
+    expect(mesDePresupuesto(new Date(2026, 1, 27), 31)).toBe('2026-01')
+  })
+
+  it('cruza el año hacia atrás', () => {
+    expect(mesDePresupuesto(new Date(2027, 0, 3), 25)).toBe('2026-12')
   })
 })
 

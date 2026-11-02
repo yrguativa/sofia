@@ -31,6 +31,15 @@ export function monthRange(ym: string) {
   return { from: `${ym}-01`, to: `${shiftMonth(ym, 1)}-01` }
 }
 
+export function mesDePresupuesto(hoy: Date, diaPago: number) {
+  const y = hoy.getFullYear()
+  const m = hoy.getMonth()
+  const ultimoDia = new Date(y, m + 1, 0).getDate()
+  const diaDeCobro = Math.min(diaPago, ultimoDia)
+  const base = hoy.getDate() < diaDeCobro ? new Date(y, m - 1, 1) : new Date(y, m, 1)
+  return `${base.getFullYear()}-${String(base.getMonth() + 1).padStart(2, '0')}`
+}
+
 export function monthOf(isoDate: string) {
   return isoDate.slice(0, 7)
 }
