@@ -3,11 +3,14 @@ import { supabase } from './supabase'
 import type {
   Account,
   AccountInput,
-  Budget,
+  BudgetEntry,
   Category,
   CategoryType,
   Goal,
   GoalInput,
+  MontoTipo,
+  PlanItem,
+  PlanItemInput,
   Profile,
   Transaction,
   TransactionInput,
@@ -104,32 +107,101 @@ export async function deleteTransaction(id: string) {
   check(await supabase.from('transactions').delete().eq('id', id))
 }
 
-export async function listBudgets(mes: string): Promise<Budget[]> {
-  const rows = unwrap<Array<Omit<Budget, 'limite'> & { limite: string | number }>>(
+export async function listPlanItems(): Promise<PlanItem[]> {
+  const rows = unwrap<Array<Omit<PlanItem, 'valor'> & { valor: string | number }>>(
     await supabase
-      .from('budgets')
-      .select('id,category_id,mes,limite')
-      .eq('mes', `${mes}-01`),
+      .from('plan_items')
+      .select('id,nombre,grupo,categoria_id,tipo_monto,valor,activo,orden')
+      .order('orden')
+      .order('nombre'),
   )
-  return rows.map((r) => ({ ...r, limite: Number(r.limite) }))
+  return rows.map((r) => ({ ...r, valor: Number(r.valor) }))
 }
 
-export async function upsertBudget(categoryId: string, mes: string, limite: number) {
+export async function savePlanItem(input: PlanItemInput, id?: string) {
+  check(
+    id
+      ? await supabase.from('plan_items').update(input).eq('id', id)
+      : await supabase.from('plan_items').insert(input),
+  )
+}
+
+export async function deletePlanItem(id: string) {
+  check(await supabase.from('plan_items').delete().eq('id', id))
+}
+
+export async function getSalario(mes: string): Promise<number | null> {
+  const rows = unwrap<Array<{ salario: string | number }>>(
+    await supabase.from('budget_months').select('salario').eq('mes', `${mes}-01`),
+  )
+  return rows.length > 0 ? Number(rows[0].salario) : null
+}
+
+export async function saveSalario(mes: string, salario: number) {
   const user_id = await currentUserId()
   check(
-    await supabase.from('budgets').upsert(
-      { user_id, category_id: categoryId, mes: `${mes}-01`, limite },
-      { onConflict: 'user_id,category_id,mes' },
-    ),
+    await supabase
+      .from('budget_months')
+      .upsert({ user_id, mes: `${mes}-01`, salario }, { onConflict: 'user_id,mes' }),
   )
 }
 
-export async function deleteBudget(id: string) {
-  check(await supabase.from('budgets').delete().eq('id', id))
+type EntryRow = Omit<BudgetEntry, 'monto' | 'valor' | 'cuenta_id'> & {
+  monto: string | number
+  valor: string | number
+  transaction: { account_id: string } | null
+}
+
+export async function listEntries(mes: string): Promise<BudgetEntry[]> {
+  const rows = unwrap<EntryRow[]>(
+    await supabase
+      .from('budget_entries')
+      .select(
+        'id,mes,plan_item_id,nombre,grupo,categoria_id,tipo_monto,valor,monto,transaction_id,transaction:transactions(account_id)',
+      )
+      .eq('mes', `${mes}-01`)
+      .order('nombre'),
+  )
+  return rows.map((r) => ({
+    id: r.id,
+    mes: r.mes,
+    plan_item_id: r.plan_item_id,
+    nombre: r.nombre,
+    grupo: r.grupo,
+    categoria_id: r.categoria_id,
+    tipo_monto: r.tipo_monto,
+    valor: Number(r.valor),
+    monto: Number(r.monto),
+    transaction_id: r.transaction_id,
+    cuenta_id: r.transaction?.account_id ?? null,
+  }))
+}
+
+export async function generarMes(mes: string): Promise<number> {
+  const { data, error } = await supabase.rpc('generar_mes', { p_mes: `${mes}-01` })
+  if (error) throw new Error(error.message)
+  return Number(data)
+}
+
+export async function setEntryStatus(id: string, cuentaId: string | null) {
+  check(await supabase.rpc('set_budget_entry_status', { p_entry: id, p_cuenta: cuentaId }))
+}
+
+export async function updateEntry(
+  id: string,
+  patch: { tipo_monto: MontoTipo; valor: number; monto: number },
+) {
+  check(await supabase.from('budget_entries').update(patch).eq('id', id))
+}
+
+export async function deleteEntry(id: string) {
+  check(await supabase.from('budget_entries').delete().eq('id', id))
 }
 
 export async function listGoals(): Promise<Goal[]> {
-  const rows = unwrap<Array<Omit<Goal, 'objetivo' | 'ahorrado'> & { objetivo: string | number; ahorrado: string | number }>>(
+  const rows = unwrap<
+    Array<Omit<Goal, 'objetivo' | 'ahorrado'> & { objetivo: string | number; ahorrado: string | number }>
+  >(
     await supabase
       .from('goals')
       .select('id,nombre,objetivo,ahorrado,fecha_meta')

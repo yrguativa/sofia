@@ -26,6 +26,7 @@ export function MorePage() {
       <Card className="mb-6 flex flex-col divide-y divide-mist p-0">
         <MenuLink to="/cuentas" label="Cuentas" />
         <MenuLink to="/categorias" label="Categorías" />
+        <MenuLink to="/plantilla" label="Plantilla de presupuesto" />
         <MenuLink to="/simulador" label="Simulador" />
       </Card>
 

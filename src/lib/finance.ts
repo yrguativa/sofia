@@ -29,13 +29,3 @@ export function summarize(transactions: Transaction[]) {
   }
   return { ingresos, gastos }
 }
-
-export function spentByCategory(transactions: Transaction[]) {
-  const spent: Record<string, number> = {}
-  for (const t of transactions) {
-    if (t.tipo === 'gasto' && t.category_id) {
-      spent[t.category_id] = (spent[t.category_id] ?? 0) + t.monto
-    }
-  }
-  return spent
-}

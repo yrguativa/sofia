@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { computeBalances, spentByCategory, summarize } from './finance'
+import { computeBalances, summarize } from './finance'
 import { monthRange, shiftMonth } from './format'
 import type { Account, Transaction } from './types'
 
@@ -49,18 +49,6 @@ describe('summarize', () => {
       tx({ tipo: 'transferencia', monto: 999, cuenta_destino_id: 'b' }),
     ])
     expect(result).toEqual({ ingresos: 1000, gastos: 250 })
-  })
-})
-
-describe('spentByCategory', () => {
-  it('agrupa solo gastos por categoría', () => {
-    const spent = spentByCategory([
-      tx({ tipo: 'gasto', monto: 100, category_id: 'c1' }),
-      tx({ tipo: 'gasto', monto: 50, category_id: 'c1' }),
-      tx({ tipo: 'ingreso', monto: 500, category_id: 'c1' }),
-      tx({ tipo: 'gasto', monto: 30 }),
-    ])
-    expect(spent).toEqual({ c1: 150 })
   })
 })
 

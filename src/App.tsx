@@ -14,6 +14,7 @@ import { MorePage } from './pages/MorePage'
 import { CategoriesPage } from './pages/CategoriesPage'
 import { SimulatorPage } from './pages/SimulatorPage'
 import { ResetPasswordPage } from './pages/ResetPasswordPage'
+import { PlanPage } from './pages/PlanPage'
 
 export default function App() {
   return (
@@ -32,6 +33,7 @@ export default function App() {
             <Route path="metas" element={<GoalsPage />} />
             <Route path="mas" element={<MorePage />} />
             <Route path="categorias" element={<CategoriesPage />} />
+            <Route path="plantilla" element={<PlanPage />} />
             <Route path="simulador" element={<SimulatorPage />} />
           </Route>
         </Routes>

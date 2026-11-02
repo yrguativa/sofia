@@ -38,11 +38,36 @@ export type Transaction = {
 
 export type TransactionInput = Omit<Transaction, 'id'>
 
-export type Budget = {
+export type PlanGrupo = 'Gastos fijos' | 'Gastos variables' | 'Deudas' | 'Ahorros'
+export const grupos: PlanGrupo[] = ['Gastos fijos', 'Gastos variables', 'Deudas', 'Ahorros']
+
+export type MontoTipo = 'valor' | 'porcentaje'
+
+export type PlanItem = {
   id: string
-  category_id: string
+  nombre: string
+  grupo: PlanGrupo
+  categoria_id: string | null
+  tipo_monto: MontoTipo
+  valor: number
+  activo: boolean
+  orden: number
+}
+
+export type PlanItemInput = Omit<PlanItem, 'id'>
+
+export type BudgetEntry = {
+  id: string
   mes: string
-  limite: number
+  plan_item_id: string | null
+  nombre: string
+  grupo: PlanGrupo
+  categoria_id: string | null
+  tipo_monto: MontoTipo
+  valor: number
+  monto: number
+  transaction_id: string | null
+  cuenta_id: string | null
 }
 
 export type Goal = {
