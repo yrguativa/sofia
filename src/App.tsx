@@ -17,7 +17,7 @@ import { SimulatorPage } from './pages/SimulatorPage'
 export default function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
+      <BrowserRouter basename={import.meta.env.BASE_URL}>
         <Routes>
           <Route path="/login" element={<Guard allow="signed_out"><LoginPage /></Guard>} />
           <Route path="/mfa/setup" element={<Guard allow="mfa_enroll"><MfaSetupPage /></Guard>} />

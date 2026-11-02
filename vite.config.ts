@@ -3,7 +3,8 @@ import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 import { defineConfig } from 'vite'
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
+  base: command === 'build' ? '/sofia/' : '/',
   plugins: [
     react(),
     tailwindcss(),
@@ -14,10 +15,10 @@ export default defineConfig({
         name: 'Finanzas',
         short_name: 'Finanzas',
         description: 'Finanzas personales',
+        lang: 'es',
         theme_color: '#0f172a',
         background_color: '#f8fafc',
         display: 'standalone',
-        start_url: '/',
         icons: [
           { src: 'pwa-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
           { src: 'pwa-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
@@ -26,4 +27,4 @@ export default defineConfig({
       },
     }),
   ],
-})
+}))
