@@ -1,31 +1,69 @@
 import { NavLink, Outlet } from 'react-router-dom'
+import { Brand } from './ui'
+import { Icon, icons } from './icons'
 
 const tabs = [
-  { to: '/', label: 'Inicio', end: true },
-  { to: '/movimientos', label: 'Movimientos', end: false },
-  { to: '/presupuestos', label: 'Presupuestos', end: false },
-  { to: '/metas', label: 'Metas', end: false },
-  { to: '/mas', label: 'Más', end: false },
+  { to: '/', label: 'Inicio', end: true, icon: icons.home },
+  { to: '/movimientos', label: 'Movimientos', end: false, icon: icons.movimientos },
+  { to: '/presupuestos', label: 'Presupuestos', end: false, icon: icons.presupuestos },
+  { to: '/metas', label: 'Metas', end: false, icon: icons.metas },
+  { to: '/mas', label: 'Más', end: false, icon: icons.mas },
 ]
 
 export function AppShell() {
   return (
-    <div className="mx-auto min-h-dvh max-w-md bg-slate-50 pb-28">
-      <main className="px-5 pt-8">
-        <Outlet />
-      </main>
-      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white pb-[env(safe-area-inset-bottom)]">
-        <div className="mx-auto flex max-w-md">
+    <div className="min-h-dvh lg:flex">
+      <aside className="fixed inset-y-4 left-4 hidden w-60 flex-col rounded-[32px] bg-ink p-5 text-white lg:flex">
+        <div className="mb-10 px-2">
+          <Brand dark />
+        </div>
+        <nav className="flex flex-col gap-1">
           {tabs.map((t) => (
             <NavLink
               key={t.to}
               to={t.to}
               end={t.end}
               className={({ isActive }) =>
-                `flex flex-1 flex-col items-center py-3 text-xs ${isActive ? 'font-semibold text-slate-900' : 'text-slate-500'}`
+                `flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium transition ${
+                  isActive ? 'bg-acid text-ink' : 'text-zinc-400 hover:bg-white/5 hover:text-white'
+                }`
               }
             >
+              <Icon>{t.icon}</Icon>
               {t.label}
+            </NavLink>
+          ))}
+        </nav>
+      </aside>
+
+      <div className="mx-auto min-h-dvh max-w-md pb-32 lg:ml-72 lg:max-w-none lg:pb-12">
+        <main className="px-5 pt-6 lg:px-10 lg:pt-10">
+          <div className="lg:mx-auto lg:max-w-6xl">
+            <Outlet />
+          </div>
+        </main>
+      </div>
+
+      <nav className="fixed inset-x-0 bottom-5 z-40 px-5 pb-[env(safe-area-inset-bottom)] lg:hidden">
+        <div className="mx-auto flex max-w-md items-center justify-around rounded-full bg-ink p-1.5 shadow-2xl">
+          {tabs.map((t) => (
+            <NavLink
+              key={t.to}
+              to={t.to}
+              end={t.end}
+              aria-label={t.label}
+              className={({ isActive }) =>
+                `flex items-center gap-2 rounded-full transition ${
+                  isActive ? 'bg-acid px-4 py-3 text-sm font-semibold text-ink' : 'h-11 w-11 justify-center text-zinc-400 hover:text-white'
+                }`
+              }
+            >
+              {({ isActive }) => (
+                <>
+                  <Icon>{t.icon}</Icon>
+                  {isActive && <span>{t.label}</span>}
+                </>
+              )}
             </NavLink>
           ))}
         </div>
