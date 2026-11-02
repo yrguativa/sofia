@@ -1,5 +1,5 @@
 import { useCallback, useState, type FormEvent } from 'react'
-import { Card, Empty, ErrorText, Loading, PageHeader, inputCls, primaryBtn } from '../components/ui'
+import { Card, Empty, ErrorText, Loading, PageHeader, SectionTitle, inputCls, primaryBtn } from '../components/ui'
 import { createCategory, deleteCategory, listCategories } from '../lib/db'
 import { useLoad } from '../lib/useLoad'
 import type { Category, CategoryType } from '../lib/types'
@@ -20,28 +20,32 @@ export function CategoriesPage() {
 
       <NewCategoryForm onSaved={reload} />
 
-      <h2 className="mb-2 mt-6 text-xs font-semibold uppercase tracking-wide text-slate-500">Mis categorías</h2>
-      {propias.length === 0 ? (
-        <Empty>Aún no has creado categorías propias.</Empty>
-      ) : (
-        <CategoryList items={propias} onChanged={reload} removable />
-      )}
+      <div className="mt-8">
+        <SectionTitle title="Mis categorías" />
+        {propias.length === 0 ? (
+          <Empty>Aún no has creado categorías propias.</Empty>
+        ) : (
+          <CategoryList items={propias} onChanged={reload} removable />
+        )}
+      </div>
 
-      <h2 className="mb-2 mt-6 text-xs font-semibold uppercase tracking-wide text-slate-500">Predefinidas</h2>
-      <CategoryList items={predefinidas} onChanged={reload} />
+      <div className="mt-8">
+        <SectionTitle title="Predefinidas" />
+        <CategoryList items={predefinidas} onChanged={reload} />
+      </div>
     </>
   )
 }
 
 function CategoryList({ items, onChanged, removable = false }: { items: Category[]; onChanged: () => void; removable?: boolean }) {
   return (
-    <Card className="flex flex-col divide-y divide-slate-100 p-0">
+    <Card className="flex flex-col divide-y divide-mist p-0">
       {items.map((c) => (
-        <div key={c.id} className="flex items-center justify-between px-5 py-3">
-          <span className="text-slate-900">
+        <div key={c.id} className="flex items-center justify-between px-5 py-4">
+          <span className="text-ink">
             {c.icono ? `${c.icono} ` : ''}
             {c.nombre}
-            <span className="ml-2 text-xs text-slate-500">{c.tipo === 'ingreso' ? 'Ingreso' : 'Gasto'}</span>
+            <span className="ml-2 text-xs text-zinc-500">{c.tipo === 'ingreso' ? 'Ingreso' : 'Gasto'}</span>
           </span>
           {removable && (
             <button
@@ -51,7 +55,7 @@ function CategoryList({ items, onChanged, removable = false }: { items: Category
                 await deleteCategory(c.id)
                 onChanged()
               }}
-              className="text-sm text-red-600"
+              className="text-sm font-medium text-red-600"
             >
               Eliminar
             </button>

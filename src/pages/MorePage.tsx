@@ -1,6 +1,7 @@
 import { useCallback, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
+import { Icon, icons } from '../components/icons'
 import { Card, ErrorText, Field, Loading, PageHeader, inputCls, primaryBtn, secondaryBtn } from '../components/ui'
 import { getProfile, updateProfile } from '../lib/db'
 import { useLoad } from '../lib/useLoad'
@@ -21,23 +22,23 @@ export function MorePage() {
     <>
       <PageHeader title="Más" />
 
-      <Card className="mb-6 flex flex-col divide-y divide-slate-100 p-0">
+      <Card className="mb-6 flex flex-col divide-y divide-mist p-0">
         <MenuLink to="/cuentas" label="Cuentas" />
         <MenuLink to="/categorias" label="Categorías" />
         <MenuLink to="/simulador" label="Simulador" />
       </Card>
 
       <Card className="mb-6">
-        <h2 className="mb-4 font-semibold text-slate-900">Perfil</h2>
+        <h2 className="mb-5 text-lg font-semibold text-ink">Perfil</h2>
         <ProfileForm profile={data} onSaved={reload} />
       </Card>
 
-      <Card className="mb-6">
-        <h2 className="font-semibold text-slate-900">Seguridad</h2>
-        <p className="mt-1 text-sm text-slate-500">
+      <section className="mb-6 rounded-[28px] bg-ink p-6 text-white">
+        <h2 className="font-semibold text-acid">Seguridad</h2>
+        <p className="mt-2 text-sm text-zinc-400">
           La verificación en dos pasos está activa. Tus códigos se guardan en KeePass.
         </p>
-      </Card>
+      </section>
 
       <button type="button" onClick={signOut} className={`${secondaryBtn} w-full`}>
         Cerrar sesión
@@ -48,9 +49,11 @@ export function MorePage() {
 
 function MenuLink({ to, label }: { to: string; label: string }) {
   return (
-    <Link to={to} className="flex items-center justify-between px-5 py-4 font-medium text-slate-900">
+    <Link to={to} className="flex items-center justify-between px-5 py-4 font-medium text-ink transition active:bg-mist">
       {label}
-      <span className="text-slate-400">›</span>
+      <span className="text-zinc-400">
+        <Icon className="h-4 w-4">{icons.chevronRight}</Icon>
+      </span>
     </Link>
   )
 }
