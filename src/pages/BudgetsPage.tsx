@@ -1,6 +1,7 @@
 import { useCallback, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { Sheet } from '../components/Sheet'
+import { colorPorCuenta, fondosPago } from '../components/estadoPago'
 import {
   Card,
   Empty,
@@ -282,9 +283,10 @@ function EntryRow({
 }) {
   const pagado = entry.transaction_id !== null
   const detalle = entry.tipo_monto === 'porcentaje' ? `${entry.valor}% del salario` : 'Valor fijo'
+  const color = pagado ? colorPorCuenta(accounts.find((a) => a.id === entry.cuenta_id)?.nombre) : undefined
 
   return (
-    <div className="rounded-xl bg-white p-4 shadow-sm">
+    <div className={`rounded-xl p-4 shadow-sm ${fondosPago[color ?? 'neutro']}`}>
       <div className="flex items-start justify-between gap-3">
         <button
           type="button"
