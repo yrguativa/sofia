@@ -12,6 +12,13 @@ import { Sheet } from '../components/Sheet'
 import type { Debt } from '../lib/types'
 import { simularPrestamo } from '../lib/simulator'
 
+function mesDeuda(fechaInicio: string, mes: number): string {
+  const [y, m] = fechaInicio.split('-').map(Number)
+  const d = new Date(y, m - 1 + (mes - 1), 1)
+  const label = d.toLocaleDateString('es-CO', { month: 'short', year: 'numeric' })
+  return label.charAt(0).toUpperCase() + label.slice(1)
+}
+
 export function DebtDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
@@ -190,7 +197,7 @@ export function DebtDetailPage() {
                 const pagado = pagados.has(a.mes) || a.mes <= Math.floor((debt.monto_total - debt.saldo_pendiente) / debt.cuota_mensual)
                 return (
                   <tr key={a.mes} className={`border-b border-zinc-100 ${pagado ? 'bg-emerald-50' : ''}`}>
-                    <td className="py-2">{a.mes}</td>
+                    <td className="py-2">{mesDeuda(debt.fecha_inicio, a.mes)}</td>
                     <td className="py-2 text-right">{formatMoney(a.cuota, moneda)}</td>
                     <td className="py-2 text-right">{formatMoney(a.capital, moneda)}</td>
                     <td className="py-2 text-right">{formatMoney(a.interes, moneda)}</td>
