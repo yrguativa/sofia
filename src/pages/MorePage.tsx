@@ -29,6 +29,7 @@ export function MorePage() {
             <MenuLink to="/cuentas" label="Cuentas" icon={icons.cuentas} />
             <MenuLink to="/categorias" label="Categorías" icon={icons.categorias} />
             <MenuLink to="/plantilla" label="Plantilla de presupuesto" icon={icons.plantilla} />
+            <MenuLink to="/salario" label="Salario (historial)" icon={icons.salario} />
             <MenuLink to="/simulador" label="Simulador" icon={icons.simulador} />
         <MenuLink to="/atajos" label="Atajos iOS" icon={icons.llave} />
           </Card>

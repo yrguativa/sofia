@@ -104,6 +104,14 @@ function ShortcutForm({ accounts, onSaved }: { accounts: Account[]; onSaved: () 
         <div className="rounded-[24px] bg-ink p-5 text-white">
           <p className="text-xs text-zinc-400">Tu token (guárdalo en el atajo)</p>
           <p className="mt-2 break-all font-mono text-sm text-acid">{token}</p>
+          <button
+            type="button"
+            onClick={() => navigator.clipboard.writeText(token)}
+            className="mt-3 flex items-center gap-2 rounded-full bg-acid px-4 py-2 text-sm font-semibold text-ink transition active:scale-95"
+          >
+            <Icon className="h-4 w-4">{icons.check}</Icon>
+            Copiar token
+          </button>
         </div>
         <p className="text-sm text-zinc-600">
           Copia este token y pégalo en la acción "Obtener contenido de URL" del atajo.

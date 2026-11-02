@@ -43,7 +43,8 @@ export function MfaVerifyPage() {
           <br />
           en dos pasos.
         </h1>
-        <p className="mt-4 text-base text-ink/70">Abre KeePass y escribe el código TOTP de Finanzas.</p>
+        <p className="mt-4 text-base text-ink/70">Abre tu app de autenticación o KeePass y escribe el código TOTP actual de Finanzas (6 dígitos, cambia cada 30 s).</p>
+          <p className="mt-2 text-sm text-ink/60">En Android: abre Aegis/Google Authenticator, busca "Finanzas" y copia el código. Si falla, revisa la hora del teléfono (automática).</p>
       </div>
 
       <form onSubmit={handleVerify} className="mt-10 flex flex-col gap-4">

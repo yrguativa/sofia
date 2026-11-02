@@ -1,5 +1,5 @@
 import { useCallback, useState, type FormEvent } from 'react'
-import { Card, Empty, ErrorText, Loading, PageHeader, SectionTitle, inputCls, primaryBtn } from '../components/ui'
+import { Card, Empty, ErrorText, Field, Loading, PageHeader, SectionTitle, inputCls, primaryBtn } from '../components/ui'
 import { createCategory, deleteCategory, listCategories } from '../lib/db'
 import { Icon } from '../components/icons'
 import { icons } from '../components/iconPaths'
@@ -94,8 +94,9 @@ function NewCategoryForm({ onSaved }: { onSaved: () => void }) {
 
   return (
     <Card>
-      <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-        <div className="grid grid-cols-[1fr_auto] gap-3">
+      <h2 className="mb-4 text-lg font-semibold text-ink">Nueva categoría</h2>
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <Field label="Nombre" hint="Ej. Mascotas, Gimnasio, Suscripciones">
           <input
             value={nombre}
             onChange={(e) => setNombre(e.target.value)}
@@ -104,19 +105,25 @@ function NewCategoryForm({ onSaved }: { onSaved: () => void }) {
             className={inputCls}
             required
           />
-          <input
-            value={icono}
-            onChange={(e) => setIcono(e.target.value)}
-            placeholder="🙂"
-            maxLength={4}
-            className={`${inputCls} w-16 text-center`}
-            aria-label="Icono"
-          />
+        </Field>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Tipo">
+            <select value={tipo} onChange={(e) => setTipo(e.target.value as CategoryType)} className={inputCls}>
+              <option value="gasto">Gasto</option>
+              <option value="ingreso">Ingreso</option>
+            </select>
+          </Field>
+          <Field label="Icono (opcional)" hint="Un emoji, ej. 🐶">
+            <input
+              value={icono}
+              onChange={(e) => setIcono(e.target.value)}
+              placeholder="🙂"
+              maxLength={4}
+              className={`${inputCls} text-center`}
+              aria-label="Icono"
+            />
+          </Field>
         </div>
-        <select value={tipo} onChange={(e) => setTipo(e.target.value as CategoryType)} className={inputCls}>
-          <option value="gasto">Gasto</option>
-          <option value="ingreso">Ingreso</option>
-        </select>
         {error && <p className="text-sm text-red-600" role="alert">{error}</p>}
         <button type="submit" disabled={saving} className={primaryBtn}>
           {saving ? 'Creando…' : 'Agregar categoría'}

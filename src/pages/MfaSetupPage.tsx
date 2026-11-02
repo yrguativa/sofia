@@ -95,15 +95,45 @@ export function MfaSetupPage() {
           />
 
           <div className="w-full rounded-[24px] bg-white p-5 text-sm">
-            <p className="font-medium text-zinc-600">Clave manual (para KeePass)</p>
+            <p className="font-medium text-zinc-600">Clave manual (para KeePass o app autenticadora)</p>
             <code className="mt-2 block break-all font-mono text-ink">{enrollment.secret}</code>
-            <button
-              type="button"
-              onClick={() => navigator.clipboard.writeText(enrollment.secret)}
-              className="mt-3 font-medium text-ink underline underline-offset-4"
-            >
-              Copiar clave
-            </button>
+            <div className="mt-3 flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={() => navigator.clipboard.writeText(enrollment.secret)}
+                className="font-medium text-ink underline underline-offset-4"
+              >
+                Copiar clave
+              </button>
+              <a
+                href={enrollment.uri}
+                className="font-medium text-ink underline underline-offset-4"
+              >
+                Abrir en app de autenticación (Android)
+              </a>
+            </div>
+          </div>
+
+          <div className="w-full rounded-[24px] bg-white p-5 text-sm text-ink/80">
+            <p className="font-medium text-zinc-600">Cómo sacar el código TOTP en Android</p>
+            <ol className="mt-2 list-decimal space-y-1 pl-5">
+              <li>Instala una app autenticadora: <strong>Aegis</strong> (recomendada), Google Authenticator o Microsoft Authenticator.</li>
+              <li>No puedes escanear el QR con la misma cámara del teléfono. Usa el botón <strong>"Abrir en app de autenticación"</strong> o copia la <strong>clave manual</strong> y pégala en la app (cuenta: Finanzas, tipo TOTP, 6 dígitos, 30 s).</li>
+              <li>La app mostrará un código de 6 dígitos que cambia cada 30 segundos. Ese es tu código TOTP.</li>
+              <li>Escríbelo en "Código de 6 dígitos" y toca "Activar y continuar".</li>
+              <li>Si dice "incorrecto", revisa que la hora del teléfono esté en automático (Ajustes → Fecha y hora).</li>
+            </ol>
+          </div>
+
+          <div className="w-full rounded-[24px] bg-white p-5 text-sm text-ink/80">
+            <p className="font-medium text-zinc-600">En iOS (app Contraseñas)</p>
+            <ol className="mt-2 list-decimal space-y-1 pl-5">
+              <li>Abre la app <strong>Contraseñas</strong> de Apple y crea/edita la entrada de Finanzas.</li>
+              <li>En "Configurar código de verificación" elige <strong>Escanear código QR</strong> o <strong>Ingresar clave de configuración</strong>.</li>
+              <li>Si escaneas, usa otro dispositivo; si no, pega la <strong>clave manual</strong> de arriba.</li>
+              <li>El código de 6 dígitos aparecerá en la entrada y se puede copiar con un toque.</li>
+              <li>Pégalo aquí para activar. Si falla, revisa la hora (Ajustes → General → Fecha y hora → Automático).</li>
+            </ol>
           </div>
 
           <form onSubmit={handleVerify} className="flex w-full flex-col gap-4">
