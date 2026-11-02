@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { Card, ErrorText, Field, Loading, PageHeader, inputCls, primaryBtn, secondaryBtn } from '../components/ui'
 import { Icon } from '../components/icons'
 import { icons } from '../components/iconPaths'
-import { deleteDebt, getProfile, listDebts, saveDebt } from '../lib/db'
+import { deleteDebt, getProfile, listAccounts, listDebts, saveDebt, saveTransaction, updateDebtSaldo } from '../lib/db'
 import { formatMoney } from '../lib/format'
 import { MoneyInput } from '../components/MoneyInput'
 import { parseMoney } from '../lib/money'
@@ -28,14 +28,16 @@ export function DebtDetailPage() {
   const [abonoModal, setAbonoModal] = useState<number | null>(null)
   const [abonoMonto, setAbonoMonto] = useState('')
   const [abonoTipo, setAbonoTipo] = useState<TipoAbono>('plazo')
+  const [cuotaModal, setCuotaModal] = useState<number | null>(null)
+  const [cuotaCuentaId, setCuotaCuentaId] = useState<string>('')
   const [abonos, setAbonos] = useState<Abono[]>([])
   const [savingAbono, setSavingAbono] = useState(false)
 
   const loader = useCallback(async () => {
-    const [profile, debts] = await Promise.all([getProfile(), listDebts()])
+    const [profile, debts, accounts] = await Promise.all([getProfile(), listDebts(), listAccounts()])
     const debt = debts.find((d) => d.id === id)
     if (!debt) throw new Error('Deuda no encontrada')
-    return { profile, debt }
+    return { profile, debt, accounts }
   }, [id])
 
   const { data, error, reload } = useLoad(loader)
@@ -43,7 +45,7 @@ export function DebtDetailPage() {
   if (error) return <ErrorText>{error}</ErrorText>
   if (!data) return <Loading />
 
-  const { profile, debt } = data
+  const { profile, debt, accounts } = data
   const moneda = profile.moneda
   const pct = debt.monto_total > 0 ? ((debt.monto_total - debt.saldo_pendiente) / debt.monto_total) * 100 : 0
   const resultado = amortizarConAbonos(debt.monto_total, debt.tasa_interes, debt.cuotas, abonos)
@@ -226,23 +228,34 @@ export function DebtDetailPage() {
                     <td className="py-2 text-right">{a.abono > 0 ? formatMoney(a.abono, moneda) : '-'}</td>
                     <td className="py-2 text-right">{formatMoney(a.saldo, moneda)}</td>
                     <td className="py-2 text-right">
-                      {abonoAplicado ? (
-                        <button
-                          type="button"
-                          onClick={() => eliminarAbono(a.mes)}
-                          className="rounded-full bg-red-50 px-3 py-1 text-xs font-medium text-red-600 transition active:scale-95"
-                        >
-                          Quitar
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => { setAbonoModal(a.mes); setAbonoMonto(''); setAbonoTipo('plazo') }}
-                          className="rounded-full bg-ink px-3 py-1 text-xs font-medium text-acid transition active:scale-95"
-                        >
-                          Abono
-                        </button>
-                      )}
+                      <div className="flex justify-end gap-1">
+                        {abonoAplicado ? (
+                          <button
+                            type="button"
+                            onClick={() => eliminarAbono(a.mes)}
+                            className="rounded-full bg-red-50 px-3 py-1 text-xs font-medium text-red-600 transition active:scale-95"
+                          >
+                            Quitar
+                          </button>
+                        ) : (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => { setCuotaModal(a.mes); setCuotaCuentaId(accounts[0]?.id ?? '') }}
+                              className="rounded-full bg-emerald-600 px-3 py-1 text-xs font-medium text-white transition active:scale-95"
+                            >
+                              Pagar
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => { setAbonoModal(a.mes); setAbonoMonto(''); setAbonoTipo('plazo') }}
+                              className="rounded-full bg-ink px-3 py-1 text-xs font-medium text-acid transition active:scale-95"
+                            >
+                              Abono
+                            </button>
+                          </>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 )
@@ -266,13 +279,22 @@ export function DebtDetailPage() {
                       Quitar
                     </button>
                   ) : (
-                    <button
-                      type="button"
-                      onClick={() => { setAbonoModal(a.mes); setAbonoMonto(''); setAbonoTipo('plazo') }}
-                      className="rounded-full bg-ink px-3 py-1 text-xs font-medium text-acid transition active:scale-95"
-                    >
-                      Abono
-                    </button>
+                    <div className="flex gap-1">
+                      <button
+                        type="button"
+                        onClick={() => { setCuotaModal(a.mes); setCuotaCuentaId(accounts[0]?.id ?? '') }}
+                        className="rounded-full bg-emerald-600 px-3 py-1 text-xs font-medium text-white transition active:scale-95"
+                      >
+                        Pagar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { setAbonoModal(a.mes); setAbonoMonto(''); setAbonoTipo('plazo') }}
+                        className="rounded-full bg-ink px-3 py-1 text-xs font-medium text-acid transition active:scale-95"
+                      >
+                        Abono
+                      </button>
+                    </div>
                   )}
                 </div>
                 <div className="grid grid-cols-2 gap-2 text-sm">
@@ -302,6 +324,56 @@ export function DebtDetailPage() {
           })}
         </div>
       </Card>
+
+      {cuotaModal !== null && (
+        <Sheet title={`Pagar cuota ${cuotaModal}`} onClose={() => setCuotaModal(null)}>
+          <div className="flex flex-col gap-4">
+            <div className="rounded-[24px] bg-mist p-5">
+              <p className="text-sm text-zinc-500">Monto de la cuota</p>
+              <p className="mt-1 text-2xl font-bold text-ink">
+                {formatMoney(resultado.amortizacion.find((a) => a.mes === cuotaModal)?.cuota ?? debt.cuota_mensual, moneda)}
+              </p>
+            </div>
+            <Field label="Cuenta">
+              <select value={cuotaCuentaId} onChange={(e) => setCuotaCuentaId(e.target.value)} className={inputCls} required>
+                {accounts.map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.nombre}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <button
+              type="button"
+              onClick={async () => {
+                const cuota = resultado.amortizacion.find((a) => a.mes === cuotaModal)?.cuota ?? debt.cuota_mensual
+                if (!cuotaCuentaId) return
+                try {
+                  await saveTransaction({
+                    account_id: cuotaCuentaId,
+                    cuenta_destino_id: null,
+                    category_id: null,
+                    monto: cuota,
+                    tipo: 'gasto',
+                    fecha: debt.fecha_inicio,
+                    nota: `${debt.nombre} - cuota ${cuotaModal}`,
+                  })
+                  const nuevoSaldo = Math.max(0, debt.saldo_pendiente - cuota)
+                  await updateDebtSaldo(debt.id, nuevoSaldo)
+                  setCuotaModal(null)
+                  reload()
+                } catch (err) {
+                  window.alert(err instanceof Error ? err.message : 'No se pudo registrar el pago.')
+                }
+              }}
+              className={`${primaryBtn} w-full gap-2`}
+            >
+              <Icon className="h-4 w-4">{icons.check}</Icon>
+              Confirmar pago
+            </button>
+          </div>
+        </Sheet>
+      )}
 
       {abonoModal !== null && (
         <Sheet title={`Abono en cuota ${abonoModal}`} onClose={() => setAbonoModal(null)}>
