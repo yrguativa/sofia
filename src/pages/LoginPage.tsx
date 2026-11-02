@@ -1,6 +1,8 @@
 import { useState, type FormEvent } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../auth/AuthContext'
+import { Icon, icons } from '../components/icons'
+import { AuthScreen, Field, inputCls, primaryBtn } from '../components/ui'
 
 type Mode = 'login' | 'signup'
 
@@ -54,33 +56,31 @@ export function LoginPage() {
   const isLogin = mode === 'login'
 
   return (
-    <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-center px-6 py-10">
-      <h1 className="text-3xl font-bold text-slate-900">Finanzas</h1>
-      <p className="mt-1 text-slate-500">
-        {isLogin ? 'Inicia sesión para continuar.' : 'Crea tu cuenta.'}
-      </p>
+    <AuthScreen>
+      <div className="mt-16">
+        <h1 className="text-5xl font-bold leading-[1.05] tracking-tight text-ink">
+          {isLogin ? 'Tus finanzas,' : 'Empieza hoy,'}
+          <br />
+          {isLogin ? 'bajo control.' : 'sin complicaciones.'}
+        </h1>
+        <p className="mt-4 text-base text-ink/70">{isLogin ? 'Inicia sesión para continuar.' : 'Crea tu cuenta.'}</p>
+      </div>
 
-      <form
-        onSubmit={handleSubmit}
-        className="mt-8 flex flex-col gap-4"
-        autoComplete="on"
-      >
+      <form onSubmit={handleSubmit} className="mt-10 flex flex-col gap-4" autoComplete="on">
         {!isLogin && (
-          <label className="flex flex-col gap-1 text-sm font-medium text-slate-700">
-            Nombre
+          <Field label="Nombre">
             <input
               name="name"
               autoComplete="name"
               value={nombre}
               onChange={(e) => setNombre(e.target.value)}
-              className="rounded-xl border border-slate-300 bg-white px-4 py-3 text-base outline-none focus:border-slate-900"
+              className={inputCls}
               required
             />
-          </label>
+          </Field>
         )}
 
-        <label className="flex flex-col gap-1 text-sm font-medium text-slate-700">
-          Correo
+        <Field label="Correo">
           <input
             type="email"
             name="username"
@@ -89,13 +89,12 @@ export function LoginPage() {
             autoCapitalize="none"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="rounded-xl border border-slate-300 bg-white px-4 py-3 text-base outline-none focus:border-slate-900"
+            className={inputCls}
             required
           />
-        </label>
+        </Field>
 
-        <label className="flex flex-col gap-1 text-sm font-medium text-slate-700">
-          Contraseña
+        <Field label="Contraseña" hint={isLogin ? undefined : 'Mínimo 12 caracteres. Guárdala en KeePass.'}>
           <input
             type="password"
             name="password"
@@ -103,29 +102,23 @@ export function LoginPage() {
             minLength={isLogin ? undefined : 12}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="rounded-xl border border-slate-300 bg-white px-4 py-3 text-base outline-none focus:border-slate-900"
+            className={inputCls}
             required
           />
-          {!isLogin && (
-            <span className="text-xs font-normal text-slate-500">
-              Mínimo 12 caracteres. Guárdala en KeePass.
-            </span>
-          )}
-        </label>
+        </Field>
 
-        {error && <p className="text-sm text-red-600" role="alert">{error}</p>}
-        {info && <p className="text-sm text-emerald-700" role="status">{info}</p>}
+        {error && <p className="rounded-2xl bg-white px-4 py-3 text-sm text-red-700" role="alert">{error}</p>}
+        {info && <p className="rounded-2xl bg-white px-4 py-3 text-sm text-emerald-700" role="status">{info}</p>}
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="mt-2 rounded-xl bg-slate-900 px-4 py-3 text-base font-semibold text-white disabled:opacity-60"
-        >
+        <button type="submit" disabled={loading} className={`${primaryBtn} mt-2 w-full justify-between pl-6 pr-2`}>
           {loading ? 'Procesando…' : isLogin ? 'Entrar' : 'Crear cuenta'}
+          <span className="flex h-11 w-11 items-center justify-center rounded-full bg-acid text-ink">
+            <Icon className="h-5 w-5">{icons.arrow}</Icon>
+          </span>
         </button>
       </form>
 
-      <div className="mt-6 flex flex-col gap-3 text-center text-sm">
+      <div className="mt-8 flex flex-col items-center gap-3 text-sm">
         <button
           type="button"
           onClick={() => {
@@ -133,16 +126,16 @@ export function LoginPage() {
             setError(null)
             setInfo(null)
           }}
-          className="text-slate-700 underline"
+          className="font-medium text-ink underline underline-offset-4"
         >
           {isLogin ? '¿No tienes cuenta? Regístrate' : 'Ya tengo cuenta'}
         </button>
         {isLogin && (
-          <button type="button" onClick={handleReset} className="text-slate-500 underline">
+          <button type="button" onClick={handleReset} className="text-ink/70 underline underline-offset-4">
             Olvidé mi contraseña
           </button>
         )}
       </div>
-    </main>
+    </AuthScreen>
   )
 }

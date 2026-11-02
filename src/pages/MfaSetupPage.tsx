@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../auth/AuthContext'
+import { AuthScreen, inputCls, primaryBtn } from '../components/ui'
 
 type Enrollment = {
   factorId: string
@@ -74,37 +75,39 @@ export function MfaSetupPage() {
   }
 
   return (
-    <main className="mx-auto flex min-h-dvh max-w-md flex-col px-6 py-10">
-      <h1 className="text-2xl font-bold text-slate-900">Activa la verificación en dos pasos</h1>
-      <p className="mt-2 text-sm text-slate-600">
-        Es obligatoria para proteger tus finanzas. Guarda el código en KeePass: en la entrada de
-        Finanzas, agrega un campo TOTP escaneando el QR o pegando la clave.
-      </p>
+    <AuthScreen>
+      <div className="mt-12">
+        <h1 className="text-4xl font-bold leading-tight tracking-tight text-ink">Activa la verificación en dos pasos</h1>
+        <p className="mt-3 text-sm text-ink/70">
+          Es obligatoria para proteger tus finanzas. Guarda el código en KeePass: en la entrada de Finanzas, agrega un
+          campo TOTP escaneando el QR o pegando la clave.
+        </p>
+      </div>
 
-      {!enrollment && !error && <p className="mt-8 text-slate-500">Generando código…</p>}
+      {!enrollment && !error && <p className="mt-10 text-ink/70">Generando código…</p>}
 
       {enrollment && (
-        <div className="mt-6 flex flex-col items-center gap-4">
+        <div className="mt-8 flex flex-col items-center gap-5">
           <img
             src={qrSrc(enrollment.qr)}
             alt="Código QR para configurar TOTP"
-            className="h-56 w-56 rounded-xl bg-white p-2"
+            className="h-56 w-56 rounded-[28px] bg-white p-3"
           />
 
-          <div className="w-full rounded-xl bg-white p-4 text-sm">
-            <p className="font-medium text-slate-700">Clave manual (para KeePass)</p>
-            <code className="mt-1 block break-all font-mono text-slate-900">{enrollment.secret}</code>
+          <div className="w-full rounded-[24px] bg-white p-5 text-sm">
+            <p className="font-medium text-zinc-600">Clave manual (para KeePass)</p>
+            <code className="mt-2 block break-all font-mono text-ink">{enrollment.secret}</code>
             <button
               type="button"
               onClick={() => navigator.clipboard.writeText(enrollment.secret)}
-              className="mt-2 text-slate-600 underline"
+              className="mt-3 font-medium text-ink underline underline-offset-4"
             >
               Copiar clave
             </button>
           </div>
 
-          <form onSubmit={handleVerify} className="flex w-full flex-col gap-3">
-            <label className="flex flex-col gap-1 text-sm font-medium text-slate-700">
+          <form onSubmit={handleVerify} className="flex w-full flex-col gap-4">
+            <label className="flex flex-col gap-2 text-sm font-medium text-ink">
               Código de 6 dígitos
               <input
                 inputMode="numeric"
@@ -113,27 +116,23 @@ export function MfaSetupPage() {
                 maxLength={6}
                 value={code}
                 onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
-                className="rounded-xl border border-slate-300 bg-white px-4 py-3 text-center text-2xl tracking-widest outline-none focus:border-slate-900"
+                className={`${inputCls} text-center text-2xl tracking-widest`}
                 required
               />
             </label>
-            {error && <p className="text-sm text-red-600" role="alert">{error}</p>}
-            <button
-              type="submit"
-              disabled={loading || code.length !== 6}
-              className="rounded-xl bg-slate-900 px-4 py-3 font-semibold text-white disabled:opacity-60"
-            >
+            {error && <p className="rounded-2xl bg-white px-4 py-3 text-sm text-red-700" role="alert">{error}</p>}
+            <button type="submit" disabled={loading || code.length !== 6} className={primaryBtn}>
               {loading ? 'Verificando…' : 'Activar y continuar'}
             </button>
           </form>
         </div>
       )}
 
-      {!enrollment && error && <p className="mt-8 text-sm text-red-600">{error}</p>}
+      {!enrollment && error && <p className="mt-10 rounded-2xl bg-white px-4 py-3 text-sm text-red-700">{error}</p>}
 
-      <button type="button" onClick={signOut} className="mt-8 text-sm text-slate-500 underline">
+      <button type="button" onClick={signOut} className="mt-10 self-center text-sm text-ink/70 underline underline-offset-4">
         Cerrar sesión
       </button>
-    </main>
+    </AuthScreen>
   )
 }

@@ -14,7 +14,7 @@ export function Guard({ allow, children }: { allow: AuthStatus; children: ReactN
 
   if (status === 'loading') {
     return (
-      <div className="flex min-h-dvh items-center justify-center text-slate-500">Cargando…</div>
+      <div className="flex min-h-dvh items-center justify-center bg-acid font-medium text-ink">Cargando…</div>
     )
   }
 

@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ErrorText, Field, inputCls, primaryBtn } from '../components/ui'
+import { AuthScreen, ErrorText, Field, inputCls, primaryBtn } from '../components/ui'
 import { supabase } from '../lib/supabase'
 
 export function ResetPasswordPage() {
@@ -36,11 +36,17 @@ export function ResetPasswordPage() {
   }
 
   return (
-    <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-center px-6 py-10">
-      <h1 className="text-2xl font-bold text-slate-900">Nueva contraseña</h1>
-      <p className="mt-1 text-slate-500">Mínimo 12 caracteres.</p>
+    <AuthScreen>
+      <div className="mt-16">
+        <h1 className="text-5xl font-bold leading-[1.05] tracking-tight text-ink">
+          Nueva
+          <br />
+          contraseña.
+        </h1>
+        <p className="mt-4 text-base text-ink/70">Mínimo 12 caracteres.</p>
+      </div>
 
-      <form onSubmit={handleSubmit} className="mt-8 flex flex-col gap-4" autoComplete="on">
+      <form onSubmit={handleSubmit} className="mt-10 flex flex-col gap-4" autoComplete="on">
         <Field label="Nueva contraseña">
           <input
             type="password"
@@ -68,10 +74,10 @@ export function ResetPasswordPage() {
 
         {error && <ErrorText>{error}</ErrorText>}
 
-        <button type="submit" disabled={saving} className={primaryBtn}>
+        <button type="submit" disabled={saving} className={`${primaryBtn} mt-2`}>
           {saving ? 'Guardando…' : 'Guardar contraseña'}
         </button>
       </form>
-    </main>
+    </AuthScreen>
   )
 }
