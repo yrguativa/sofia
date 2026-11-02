@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 
-const VERSION = '0.5.0'
+const VERSION = '0.6.0'
 
 export function SplashScreen() {
   const [visible, setVisible] = useState(true)
