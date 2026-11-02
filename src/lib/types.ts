@@ -69,6 +69,7 @@ export type BudgetEntry = {
   monto: number
   transaction_id: string | null
   cuenta_id: string | null
+  metodo_pago: 'pago' | 'bolsillo' | null
 }
 
 export type Goal = {
@@ -80,3 +81,17 @@ export type Goal = {
 }
 
 export type GoalInput = Omit<Goal, 'id'>
+
+export type Debt = {
+  id: string
+  nombre: string
+  monto_total: number
+  tasa_interes: number
+  cuotas: number
+  cuota_mensual: number
+  fecha_inicio: string
+  saldo_pendiente: number
+  plan_item_id: string | null
+}
+
+export type DebtInput = Omit<Debt, 'id' | 'saldo_pendiente'> & { saldo_pendiente?: number }

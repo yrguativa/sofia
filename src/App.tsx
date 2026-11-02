@@ -13,6 +13,9 @@ import { GoalsPage } from './pages/GoalsPage'
 import { MorePage } from './pages/MorePage'
 import { CategoriesPage } from './pages/CategoriesPage'
 import { SimulatorPage } from './pages/SimulatorPage'
+import { DebtsPage } from './pages/DebtsPage'
+import { SalarioPage } from './pages/SalarioPage'
+import { AtajosPage } from './pages/AtajosPage'
 import { ResetPasswordPage } from './pages/ResetPasswordPage'
 import { PlanPage } from './pages/PlanPage'
 
@@ -35,6 +38,9 @@ export default function App() {
             <Route path="categorias" element={<CategoriesPage />} />
             <Route path="plantilla" element={<PlanPage />} />
             <Route path="simulador" element={<SimulatorPage />} />
+            <Route path="salario" element={<SalarioPage />} />
+            <Route path="deudas" element={<DebtsPage />} />
+            <Route path="atajos" element={<AtajosPage />} />
           </Route>
         </Routes>
       </BrowserRouter>

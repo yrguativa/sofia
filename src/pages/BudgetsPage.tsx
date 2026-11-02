@@ -3,8 +3,8 @@ import { Link } from 'react-router-dom'
 import { Sheet } from '../components/Sheet'
 import { MoneyInput } from '../components/MoneyInput'
 import { Icon } from '../components/icons'
-import { icons, tipoCuentaIcon, grupoIcon } from '../components/iconPaths'
-import { colorPorCuenta, fondosPago } from '../components/estadoPago'
+import { icons, grupoIcon } from '../components/iconPaths'
+import { fondosPago } from '../components/estadoPago'
 import {
   Card,
   Empty,
@@ -34,7 +34,7 @@ import { montoDesde, resumenPresupuesto } from '../lib/presupuesto'
 import { parseMoney } from '../lib/money'
 import { currentMonth, formatMoney, mesDePresupuesto, monthLabel, shiftMonth } from '../lib/format'
 import { useLoad } from '../lib/useLoad'
-import { grupos, type Account, type BudgetEntry, type MontoTipo } from '../lib/types'
+import { grupos, type BudgetEntry, type MontoTipo } from '../lib/types'
 
 function porcentaje(parte: number, total: number) {
   return total > 0 ? Math.round((parte / total) * 100) : 0
@@ -200,7 +200,6 @@ function BudgetsContent({ mesInicial }: { mesInicial: string }) {
                   <EntryRow
                     key={e.id}
                     entry={e}
-                    accounts={data.accounts}
                     moneda={moneda}
                     onPagar={() => setPagando(e)}
                     onEdit={() => setEditing(e)}
@@ -216,12 +215,11 @@ function BudgetsContent({ mesInicial }: { mesInicial: string }) {
         <Sheet title={`Pagar ${pagando.nombre}`} onClose={() => setPagando(null)}>
           <PagoForm
             entry={pagando}
-            accounts={data.accounts}
             moneda={moneda}
-            onConfirm={async (cuentaId) => {
+            onConfirm={async (metodo) => {
               const id = pagando.id
               try {
-                await setEntryStatus(id, cuentaId)
+                await setEntryStatus(id, metodo)
                 setPagando(null)
                 reload()
                 return null
@@ -298,20 +296,17 @@ function SalarioCard({ salario, onSave }: { salario: number; onSave: (valor: num
 
 function EntryRow({
   entry,
-  accounts,
   moneda,
   onPagar,
   onEdit,
 }: {
   entry: BudgetEntry
-  accounts: Account[]
   moneda: string
   onPagar: () => void
   onEdit: () => void
 }) {
-  const pagado = entry.transaction_id !== null
-  const cuenta = accounts.find((a) => a.id === entry.cuenta_id)
-  const color = pagado ? colorPorCuenta(cuenta?.nombre) : undefined
+  const pagado = entry.metodo_pago !== null
+  const color = entry.metodo_pago === 'bolsillo' ? 'amarillo' : entry.metodo_pago === 'pago' ? 'verde' : undefined
 
   return (
     <div className={`group flex flex-col gap-2 rounded-[18px] p-3.5 shadow-sm ${fondosPago[color ?? 'neutro']}`}>
@@ -329,9 +324,9 @@ function EntryRow({
       <div className="flex items-center justify-between gap-2">
         <span className="inline-flex min-w-0 items-center gap-1.5 text-xs font-medium text-zinc-600">
           <Icon className="h-3.5 w-3.5 shrink-0">
-            {pagado ? (cuenta ? tipoCuentaIcon[cuenta.tipo] : icons.check) : icons.pendiente}
+            {pagado ? (entry.metodo_pago === 'bolsillo' ? icons.efectivo : icons.banco) : icons.pendiente}
           </Icon>
-          <span className="truncate">{pagado ? (cuenta?.nombre ?? 'Pagado') : 'Pendiente'}</span>
+          <span className="truncate">{pagado ? (entry.metodo_pago === 'bolsillo' ? 'Bolsillo' : 'Pago') : 'Pendiente'}</span>
         </span>
         {pagado ? (
           <button
@@ -356,26 +351,23 @@ function EntryRow({
 
 function PagoForm({
   entry,
-  accounts,
   moneda,
   onConfirm,
 }: {
   entry: BudgetEntry
-  accounts: Account[]
   moneda: string
-  onConfirm: (cuentaId: string | null) => Promise<string | null>
+  onConfirm: (metodo: string | null) => Promise<string | null>
 }) {
-  const [elegida, setElegida] = useState<string | null>(entry.cuenta_id)
+  const [elegido, setElegido] = useState<string | null>(entry.metodo_pago)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const cambio = elegida !== entry.cuenta_id
-  const cuenta = accounts.find((a) => a.id === elegida)
+  const cambio = elegido !== entry.metodo_pago
 
   async function confirmar() {
     setSaving(true)
     setError(null)
-    const msg = await onConfirm(elegida)
+    const msg = await onConfirm(elegido)
     if (msg) {
       setError(msg)
       setSaving(false)
@@ -393,49 +385,48 @@ function PagoForm({
       </div>
 
       <div>
-        <p className="mb-3 text-sm font-medium text-zinc-600">Pagar desde</p>
-        <div className="grid grid-cols-2 gap-3">
-          {accounts.map((a) => {
-            const seleccionada = elegida === a.id
-            return (
-              <button
-                key={a.id}
-                type="button"
-                onClick={() => setElegida(a.id)}
-                aria-pressed={seleccionada}
-                className={`flex flex-col items-start gap-3 rounded-[22px] p-4 text-left transition active:scale-[0.98] ${
-                  seleccionada ? 'bg-ink text-white' : 'bg-mist text-ink hover:bg-zinc-200'
-                }`}
-              >
-                <span
-                  className={`flex h-10 w-10 items-center justify-center rounded-full ${
-                    seleccionada ? 'bg-acid text-ink' : 'bg-white text-ink'
-                  }`}
-                >
-                  <Icon className="h-5 w-5">{tipoCuentaIcon[a.tipo]}</Icon>
-                </span>
-                <span className="font-semibold">{a.nombre}</span>
-              </button>
-            )
-          })}
+        <p className="mb-3 text-sm font-medium text-zinc-600">Estado de pago</p>
+        <div className="grid grid-cols-3 gap-3">
+          <button
+            type="button"
+            onClick={() => setElegido(null)}
+            aria-pressed={elegido === null}
+            className={`flex flex-col items-center gap-2 rounded-[22px] p-4 text-center transition active:scale-[0.98] ${
+              elegido === null ? 'bg-ink text-white' : 'bg-mist text-ink hover:bg-zinc-200'
+            }`}
+          >
+            <Icon className="h-5 w-5">{icons.pendiente}</Icon>
+            <span className="text-sm font-medium">Pendiente</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setElegido('pago')}
+            aria-pressed={elegido === 'pago'}
+            className={`flex flex-col items-center gap-2 rounded-[22px] p-4 text-center transition active:scale-[0.98] ${
+              elegido === 'pago' ? 'bg-ink text-white' : 'bg-mist text-ink hover:bg-zinc-200'
+            }`}
+          >
+            <Icon className="h-5 w-5">{icons.banco}</Icon>
+            <span className="text-sm font-medium">Pago</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setElegido('bolsillo')}
+            aria-pressed={elegido === 'bolsillo'}
+            className={`flex flex-col items-center gap-2 rounded-[22px] p-4 text-center transition active:scale-[0.98] ${
+              elegido === 'bolsillo' ? 'bg-ink text-white' : 'bg-mist text-ink hover:bg-zinc-200'
+            }`}
+          >
+            <Icon className="h-5 w-5">{icons.efectivo}</Icon>
+            <span className="text-sm font-medium">Bolsillo</span>
+          </button>
         </div>
-        <button
-          type="button"
-          onClick={() => setElegida(null)}
-          aria-pressed={elegida === null}
-          className={`mt-3 flex w-full items-center justify-center gap-2 rounded-full px-4 py-3 text-sm font-medium transition ${
-            elegida === null ? 'bg-ink text-white' : 'bg-mist text-ink hover:bg-zinc-200'
-          }`}
-        >
-          <Icon className="h-4 w-4">{icons.pendiente}</Icon>
-          Marcar como pendiente
-        </button>
       </div>
 
       <p className="rounded-2xl bg-mist px-4 py-3 text-sm text-zinc-600">
-        {cuenta
-          ? `Se registrará un gasto de ${formatMoney(entry.monto, moneda)} desde ${cuenta.nombre} y el ítem quedará pagado.`
-          : 'Se eliminará el movimiento asociado y el ítem volverá a pendiente.'}
+        {elegido === null
+          ? 'El ítem volverá a pendiente y se eliminará el movimiento asociado.'
+          : `Se registrará un gasto de ${formatMoney(entry.monto, moneda)} y el ítem quedará pagado.`}
       </p>
 
       {error && <ErrorText>{error}</ErrorText>}
@@ -446,12 +437,13 @@ function PagoForm({
         disabled={!cambio || saving}
         className={`${primaryBtn} w-full gap-2`}
       >
-        <Icon className="h-4 w-4">{cuenta ? icons.check : icons.pendiente}</Icon>
-        {saving ? 'Guardando…' : cuenta ? 'Confirmar pago' : 'Quitar pago'}
+        <Icon className="h-4 w-4">{elegido === null ? icons.pendiente : icons.check}</Icon>
+        {saving ? 'Guardando…' : 'Confirmar'}
       </button>
     </div>
   )
 }
+
 
 function EntryForm({
   entry,

@@ -4,6 +4,8 @@ import type {
   Account,
   AccountInput,
   BudgetEntry,
+  Debt,
+  DebtInput,
   Category,
   CategoryType,
   Goal,
@@ -150,6 +152,7 @@ type EntryRow = Omit<BudgetEntry, 'monto' | 'valor' | 'cuenta_id'> & {
   monto: string | number
   valor: string | number
   transaction: { account_id: string } | null
+  metodo_pago: string | null
 }
 
 export async function listEntries(mes: string): Promise<BudgetEntry[]> {
@@ -157,7 +160,7 @@ export async function listEntries(mes: string): Promise<BudgetEntry[]> {
     await supabase
       .from('budget_entries')
       .select(
-        'id,mes,plan_item_id,nombre,grupo,categoria_id,tipo_monto,valor,monto,transaction_id,transaction:transactions(account_id)',
+        'id,mes,plan_item_id,nombre,grupo,categoria_id,tipo_monto,valor,monto,transaction_id,metodo_pago,transaction:transactions(account_id)',
       )
       .eq('mes', `${mes}-01`)
       .order('nombre'),
@@ -174,6 +177,7 @@ export async function listEntries(mes: string): Promise<BudgetEntry[]> {
     monto: Number(r.monto),
     transaction_id: r.transaction_id,
     cuenta_id: r.transaction?.account_id ?? null,
+    metodo_pago: r.metodo_pago as 'pago' | 'bolsillo' | null,
   }))
 }
 
@@ -183,8 +187,8 @@ export async function generarMes(mes: string): Promise<number> {
   return Number(data)
 }
 
-export async function setEntryStatus(id: string, cuentaId: string | null) {
-  check(await supabase.rpc('set_budget_entry_status', { p_entry: id, p_cuenta: cuentaId }))
+export async function setEntryStatus(id: string, metodo: string | null) {
+  check(await supabase.rpc('set_budget_entry_status', { p_entry: id, p_metodo: metodo }))
 }
 
 export async function updateEntry(
@@ -220,6 +224,76 @@ export async function saveSalarioHistorial(desde: string, monto: number) {
 export async function deleteSalarioHistorial(id: string) {
   check(await supabase.from('salario_historial').delete().eq('id', id))
 }
+
+
+export async function listShortcuts() {
+  const rows = unwrap<Array<{ id: string; nombre: string; cuenta_id: string | null; ultimo_uso: string | null; cuenta: { nombre: string } | null }>>(
+    await supabase
+      .from('shortcut_tokens')
+      .select('id,nombre,cuenta_id,ultimo_uso,cuenta:accounts(nombre)')
+      .order('creado_en', { ascending: false }),
+  )
+  return rows.map((r) => ({ ...r, cuenta_nombre: r.cuenta?.nombre ?? null }))
+}
+
+export async function saveShortcut(nombre: string, cuentaId: string) {
+  const user_id = await currentUserId()
+  const array = new Uint8Array(32)
+  crypto.getRandomValues(array)
+  const token = Array.from(array).map((b) => b.toString(16).padStart(2, '0')).join('')
+  const encoder = new TextEncoder()
+  const data = encoder.encode(token)
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data)
+  const hashArray = Array.from(new Uint8Array(hashBuffer))
+  const tokenHash = hashArray.map((b) => b.toString(16).padStart(2, '0')).join('')
+  check(
+    await supabase.from('shortcut_tokens').insert({
+      user_id,
+      token_hash: tokenHash,
+      cuenta_id: cuentaId,
+      nombre,
+    }),
+  )
+  return { token }
+}
+
+export async function deleteShortcut(id: string) {
+  check(await supabase.from('shortcut_tokens').delete().eq('id', id))
+}
+
+
+export async function listDebts(): Promise<Debt[]> {
+  const rows = unwrap<Array<Omit<Debt, 'monto_total' | 'tasa_interes' | 'cuota_mensual' | 'saldo_pendiente'> & { monto_total: string | number; tasa_interes: string | number; cuota_mensual: string | number; saldo_pendiente: string | number }>>(
+    await supabase
+      .from('debts')
+      .select('id,nombre,monto_total,tasa_interes,cuotas,cuota_mensual,fecha_inicio,saldo_pendiente,plan_item_id')
+      .order('creado_en'),
+  )
+  return rows.map((r) => ({
+    ...r,
+    monto_total: Number(r.monto_total),
+    tasa_interes: Number(r.tasa_interes),
+    cuota_mensual: Number(r.cuota_mensual),
+    saldo_pendiente: Number(r.saldo_pendiente),
+  }))
+}
+
+export async function saveDebt(input: DebtInput, id?: string) {
+  check(
+    id
+      ? await supabase.from('debts').update(input).eq('id', id)
+      : await supabase.from('debts').insert({ ...input, saldo_pendiente: input.saldo_pendiente ?? input.monto_total }),
+  )
+}
+
+export async function deleteDebt(id: string) {
+  check(await supabase.from('debts').delete().eq('id', id))
+}
+
+export async function updateDebtSaldo(id: string, saldo: number) {
+  check(await supabase.from('debts').update({ saldo_pendiente: saldo }).eq('id', id))
+}
+
 
 export async function listGoals(): Promise<Goal[]> {
   const rows = unwrap<
