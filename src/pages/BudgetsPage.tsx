@@ -9,6 +9,7 @@ import {
   Loading,
   MonthSwitcher,
   PageHeader,
+  ProgressBar,
   dangerBtn,
   inputCls,
   primaryBtn,
@@ -29,6 +30,10 @@ import { montoDesde, resumenPresupuesto } from '../lib/presupuesto'
 import { currentMonth, formatMoney, mesDePresupuesto, monthLabel, shiftMonth } from '../lib/format'
 import { useLoad } from '../lib/useLoad'
 import { grupos, type BudgetEntry, type MontoTipo } from '../lib/types'
+
+function porcentaje(parte: number, total: number) {
+  return total > 0 ? Math.round((parte / total) * 100) : 0
+}
 
 export function BudgetsPage() {
   const perfil = useLoad(getProfile)
@@ -139,16 +144,30 @@ function BudgetsContent({ mesInicial }: { mesInicial: string }) {
               tone={resumen.sinAsignar < 0 ? 'red' : 'normal'}
             />
           </div>
-          <div className="mt-4 divide-y divide-slate-100 border-t border-slate-100 text-sm">
+          <div className="mt-5 border-t border-slate-100 pt-5">
+            <div className="mb-2 flex items-end justify-between text-sm">
+              <span className="font-medium text-ink">Ejecutado del plan</span>
+              <span className="font-semibold text-ink">{porcentaje(resumen.pagado, resumen.planificado)}%</span>
+            </div>
+            <ProgressBar value={porcentaje(resumen.pagado, resumen.planificado)} tone="acid" />
+            <p className="mt-2 text-xs text-zinc-500">
+              {formatMoney(resumen.pagado, moneda)} de {formatMoney(resumen.planificado, moneda)} pagados
+            </p>
+          </div>
+          <div className="mt-5 flex flex-col gap-4">
             {grupos.map((g) => {
               const r = resumen.porGrupo[g]
               if (!r) return null
+              const pct = porcentaje(r.pagado, r.planificado)
               return (
-                <div key={g} className="flex justify-between py-2">
-                  <span className="text-slate-600">{g}</span>
-                  <span className="text-slate-900">
-                    {formatMoney(r.pagado, moneda)} / {formatMoney(r.planificado, moneda)}
-                  </span>
+                <div key={g}>
+                  <div className="mb-1.5 flex items-center justify-between text-sm">
+                    <span className="text-zinc-600">{g}</span>
+                    <span className="text-xs text-zinc-500">
+                      {formatMoney(r.pagado, moneda)} / {formatMoney(r.planificado, moneda)} · {pct}%
+                    </span>
+                  </div>
+                  <ProgressBar value={pct} tone={pct >= 100 ? 'acid' : 'ink'} />
                 </div>
               )
             })}
