@@ -201,7 +201,7 @@ export function DebtDetailPage() {
             <p className="font-semibold text-ink">{resultado.meses}</p>
           </div>
         </div>
-        <div className="max-h-96 overflow-x-auto overflow-y-auto">
+        <div className="hidden max-h-96 overflow-x-auto overflow-y-auto md:block">
           <table className="w-full text-sm">
             <thead className="sticky top-0 bg-white">
               <tr className="border-b border-zinc-200 text-zinc-500">
@@ -249,6 +249,57 @@ export function DebtDetailPage() {
               })}
             </tbody>
           </table>
+        </div>
+        <div className="max-h-96 space-y-3 overflow-y-auto md:hidden">
+          {resultado.amortizacion.map((a) => {
+            const abonoAplicado = abonos.find((ab) => ab.mes === a.mes)
+            return (
+              <div key={a.mes} className={`rounded-[18px] p-4 shadow-sm ${abonoAplicado ? 'bg-emerald-50' : 'bg-mist'}`}>
+                <div className="mb-2 flex items-center justify-between">
+                  <p className="font-semibold text-ink">{a.mes}: {mesDeuda(debt.fecha_inicio, a.mes)}</p>
+                  {abonoAplicado ? (
+                    <button
+                      type="button"
+                      onClick={() => eliminarAbono(a.mes)}
+                      className="rounded-full bg-red-50 px-3 py-1 text-xs font-medium text-red-600 transition active:scale-95"
+                    >
+                      Quitar
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => { setAbonoModal(a.mes); setAbonoMonto(''); setAbonoTipo('plazo') }}
+                      className="rounded-full bg-ink px-3 py-1 text-xs font-medium text-acid transition active:scale-95"
+                    >
+                      Abono
+                    </button>
+                  )}
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div>
+                    <p className="text-xs text-zinc-500">Cuota</p>
+                    <p className="font-medium text-ink">{formatMoney(a.cuota, moneda)}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-zinc-500">Capital</p>
+                    <p className="font-medium text-ink">{formatMoney(a.capital - a.abono, moneda)}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-zinc-500">Interés</p>
+                    <p className="font-medium text-ink">{formatMoney(a.interes, moneda)}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-zinc-500">Abono</p>
+                    <p className="font-medium text-ink">{a.abono > 0 ? formatMoney(a.abono, moneda) : '-'}</p>
+                  </div>
+                  <div className="col-span-2">
+                    <p className="text-xs text-zinc-500">Saldo</p>
+                    <p className="font-semibold text-ink">{formatMoney(a.saldo, moneda)}</p>
+                  </div>
+                </div>
+              </div>
+            )
+          })}
         </div>
       </Card>
 
