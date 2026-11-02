@@ -51,6 +51,20 @@ export function MorePage() {
               La verificación en dos pasos está activa. Tus códigos se guardan en KeePass.
             </p>
           </section>
+
+      <Card className="border border-red-200 bg-red-50">
+        <h2 className="mb-2 text-lg font-semibold text-red-700">Zona de peligro</h2>
+        <p className="mb-4 text-sm text-red-600">
+          Elimina permanentemente tu cuenta y todos tus datos. Esta acción no se puede deshacer.
+        </p>
+        <button
+          type="button"
+          onClick={() => { setDeleteError(null); setDeleteOpen(true) }}
+          className="w-full rounded-full bg-red-600 px-5 py-3 font-medium text-white transition active:scale-[0.98]"
+        >
+          Eliminar cuenta
+        </button>
+      </Card>
         </div>
 
         <div className="flex flex-col gap-6">
