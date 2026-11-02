@@ -251,6 +251,29 @@ export async function deleteIngresoAdicional(id: string) {
   check(await supabase.from('ingresos_adicionales').delete().eq('id', id))
 }
 
+export async function listBolsillos(accountId?: string) {
+  let q = supabase.from('bolsillos').select('id,account_id,nombre,saldo').order('creado_en', { ascending: false })
+  if (accountId) q = q.eq('account_id', accountId)
+  const rows = unwrap<Array<{ id: string; account_id: string; nombre: string; saldo: string | number }>>(await q)
+  return rows.map((r) => ({ ...r, saldo: Number(r.saldo) }))
+}
+
+export async function saveBolsillo(accountId: string, nombre: string, saldo: number) {
+  const user_id = await currentUserId()
+  check(await supabase.from('bolsillos').insert({ user_id, account_id: accountId, nombre: nombre.trim(), saldo }))
+}
+
+export async function deleteBolsillo(id: string) {
+  check(await supabase.from('bolsillos').delete().eq('id', id))
+}
+
+export async function updateBolsilloSaldo(id: string, delta: number) {
+  // read current
+  const rows = unwrap<Array<{ saldo: string | number }>>(await supabase.from('bolsillos').select('saldo').eq('id', id))
+  const current = rows.length ? Number(rows[0].saldo) : 0
+  check(await supabase.from('bolsillos').update({ saldo: current + delta }).eq('id', id))
+}
+
 export async function listShortcuts() {
   const rows = unwrap<Array<{ id: string; nombre: string; cuenta_id: string | null; ultimo_uso: string | null; cuenta: { nombre: string } | null }>>(
     await supabase

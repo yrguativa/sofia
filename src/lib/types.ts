@@ -1,4 +1,11 @@
 export type AccountType = 'efectivo' | 'banco' | 'tarjeta' | 'ahorro'
+
+export type Bolsillo = {
+  id: string
+  account_id: string
+  nombre: string
+  saldo: number
+}
 export type TxType = 'ingreso' | 'gasto' | 'transferencia'
 export type CategoryType = 'ingreso' | 'gasto'
 

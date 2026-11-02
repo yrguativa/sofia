@@ -68,14 +68,6 @@ export function MorePage() {
             <Icon className="h-4 w-4">{icons.logout}</Icon>
             Cerrar sesión
           </button>
-
-          <button
-            type="button"
-            onClick={() => { setDeleteError(null); setDeleteOpen(true) }}
-            className="w-full rounded-full bg-red-50 px-5 py-3 font-medium text-red-600 transition active:scale-[0.98]"
-          >
-            Eliminar cuenta
-          </button>
         </div>
       </div>
 

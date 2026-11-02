@@ -26,12 +26,15 @@ import {
   getProfile,
   getSalario,
   listAccounts,
+  listBolsillos,
   listCategories,
   listIngresosAdicionales,
   listEntries,
   listPlanItems,
   saveAccount,
+  saveBolsillo,
   saveIngresoAdicional,
+  updateBolsilloSaldo,
   saveSalario,
   setEntryStatus,
   updateEntry,
@@ -41,7 +44,7 @@ import { montoDesde, resumenPresupuesto } from '../lib/presupuesto'
 import { parseMoney } from '../lib/money'
 import { currentMonth, formatMoney, mesDePresupuesto, monthLabel, shiftMonth } from '../lib/format'
 import { useLoad } from '../lib/useLoad'
-import { grupos, type Account, type BudgetEntry, type MontoTipo } from '../lib/types'
+import { grupos, type Account, type Bolsillo, type BudgetEntry, type MontoTipo } from '../lib/types'
 
 function porcentaje(parte: number, total: number) {
   return total > 0 ? Math.round((parte / total) * 100) : 0
@@ -381,10 +384,13 @@ function BudgetsContent({ mesInicial }: { mesInicial: string }) {
             entry={pagando}
             moneda={moneda}
             accounts={data.accounts}
-            onConfirm={async (metodo, cuentaId) => {
+            onConfirm={async (metodo, cuentaId, bolsilloId) => {
               const id = pagando.id
               try {
                 await setEntryStatus(id, metodo, cuentaId)
+                if (metodo === 'bolsillo' && bolsilloId && pagando) {
+                  await updateBolsilloSaldo(bolsilloId, -pagando.monto)
+                }
                 setPagando(null)
                 reload()
                 return null
@@ -555,36 +561,44 @@ function PagoForm({
   entry: BudgetEntry
   moneda: string
   accounts: Account[]
-  onConfirm: (metodo: string | null, cuentaId: string | null) => Promise<string | null>
+  onConfirm: (metodo: string | null, cuentaId: string | null, bolsilloId: string | null) => Promise<string | null>
 }) {
   const [localAccounts, setLocalAccounts] = useState<Account[]>(accounts)
   const [metodo, setMetodo] = useState<string | null>(entry.metodo_pago)
   const [cuentaId, setCuentaId] = useState<string | null>(entry.cuenta_id)
+  const [bolsillos, setBolsillos] = useState<Bolsillo[]>([])
+  const [bolsilloId, setBolsilloId] = useState<string | null>(null)
+  const [nuevoBolsilloNombre, setNuevoBolsilloNombre] = useState('')
+  const [creandoBolsillo, setCreandoBolsillo] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [nuevoBolsillo, setNuevoBolsillo] = useState('')
-  const [creando, setCreando] = useState(false)
 
   const cuentasPago = localAccounts.filter((a) => a.tipo !== 'efectivo')
   const cuentasBolsillo = localAccounts.filter((a) => a.tipo === 'efectivo')
   const cuentasDisponibles = metodo === 'bolsillo' ? cuentasBolsillo : cuentasPago
   const lista = cuentasDisponibles.length > 0 ? cuentasDisponibles : localAccounts
 
+  useEffect(() => {
+    if (!cuentaId) { setBolsillos([]); return }
+    listBolsillos(cuentaId).then(setBolsillos).catch(() => setBolsillos([]))
+  }, [cuentaId])
+
   async function crearBolsillo() {
-    const nombre = nuevoBolsillo.trim() || 'Bolsillo'
-    setCreando(true)
+    if (!cuentaId) return
+    const nombre = nuevoBolsilloNombre.trim() || 'Bolsillo'
+    setCreandoBolsillo(true)
     setError(null)
     try {
-      await saveAccount({ nombre, tipo: 'efectivo', saldo_inicial: 0 })
-      const updated = await listAccounts()
-      setLocalAccounts(updated)
-      const creado = updated.find((a) => a.nombre === nombre && a.tipo === 'efectivo')
-      if (creado) setCuentaId(creado.id)
-      setNuevoBolsillo('')
+      await saveBolsillo(cuentaId, nombre, 0)
+      const updated = await listBolsillos(cuentaId)
+      setBolsillos(updated)
+      const creado = updated.find((b) => b.nombre === nombre)
+      if (creado) setBolsilloId(creado.id)
+      setNuevoBolsilloNombre('')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No se pudo crear el bolsillo.')
     } finally {
-      setCreando(false)
+      setCreandoBolsillo(false)
     }
   }
 
@@ -602,7 +616,10 @@ function PagoForm({
   async function confirmar() {
     setSaving(true)
     setError(null)
-    const msg = await onConfirm(metodo, metodo ? cuentaId : null)
+    const msg = await onConfirm(metodo, metodo ? cuentaId : null, metodo === 'bolsillo' ? bolsilloId : null)
+    if (!msg && metodo === 'bolsillo' && bolsilloId) {
+      // saldo ya actualizado en onConfirm
+    }
     if (msg) {
       setError(msg)
       setSaving(false)
