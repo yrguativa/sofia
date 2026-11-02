@@ -1,0 +1,146 @@
+import { useCallback, useState, type FormEvent } from 'react'
+import { Sheet } from '../components/Sheet'
+import { Card, Empty, ErrorText, Field, Loading, PageHeader, dangerBtn, inputCls, primaryBtn } from '../components/ui'
+import { deleteAccount, getProfile, listAccounts, listTransactions, saveAccount } from '../lib/db'
+import { computeBalances } from '../lib/finance'
+import { formatMoney } from '../lib/format'
+import { useLoad } from '../lib/useLoad'
+import type { Account, AccountType } from '../lib/types'
+
+const tipos: { value: AccountType; label: string }[] = [
+  { value: 'banco', label: 'Banco' },
+  { value: 'efectivo', label: 'Efectivo' },
+  { value: 'tarjeta', label: 'Tarjeta de crédito' },
+  { value: 'ahorro', label: 'Ahorro' },
+]
+
+export function AccountsPage() {
+  const [editing, setEditing] = useState<Account | 'new' | null>(null)
+
+  const loader = useCallback(async () => {
+    const [profile, accounts, transactions] = await Promise.all([getProfile(), listAccounts(), listTransactions()])
+    return { profile, accounts, transactions }
+  }, [])
+
+  const { data, error, reload } = useLoad(loader)
+
+  function close() {
+    setEditing(null)
+    reload()
+  }
+
+  if (error) return <ErrorText>{error}</ErrorText>
+  if (!data) return <Loading />
+
+  const balances = computeBalances(data.accounts, data.transactions)
+  const total = data.accounts.reduce((s, a) => s + (balances[a.id] ?? 0), 0)
+
+  return (
+    <>
+      <PageHeader
+        title="Cuentas"
+        action={
+          <button type="button" onClick={() => setEditing('new')} className={primaryBtn}>
+            + Nueva
+          </button>
+        }
+      />
+
+      <p className="mb-4 text-sm text-slate-500">
+        Patrimonio total: <span className="font-semibold text-slate-900">{formatMoney(total, data.profile.moneda)}</span>
+      </p>
+
+      {data.accounts.length === 0 ? (
+        <Empty>Crea tu primera cuenta: efectivo, banco, tarjeta o ahorro.</Empty>
+      ) : (
+        <div className="flex flex-col gap-3">
+          {data.accounts.map((a) => (
+            <button key={a.id} type="button" onClick={() => setEditing(a)} className="text-left">
+              <Card className="flex items-center justify-between p-4">
+                <div>
+                  <p className="font-medium text-slate-900">{a.nombre}</p>
+                  <p className="text-xs uppercase tracking-wide text-slate-500">{tipos.find((t) => t.value === a.tipo)?.label}</p>
+                </div>
+                <p className="font-semibold text-slate-900">{formatMoney(balances[a.id] ?? 0, data.profile.moneda)}</p>
+              </Card>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {editing && (
+        <Sheet title={editing === 'new' ? 'Nueva cuenta' : 'Editar cuenta'} onClose={() => setEditing(null)}>
+          <AccountForm account={editing === 'new' ? null : editing} onSaved={close} />
+        </Sheet>
+      )}
+    </>
+  )
+}
+
+function AccountForm({ account, onSaved }: { account: Account | null; onSaved: () => void }) {
+  const [nombre, setNombre] = useState(account?.nombre ?? '')
+  const [tipo, setTipo] = useState<AccountType>(account?.tipo ?? 'banco')
+  const [saldo, setSaldo] = useState(account ? String(account.saldo_inicial) : '0')
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    setError(null)
+    setSaving(true)
+    try {
+      await saveAccount(
+        { nombre: nombre.trim(), tipo, saldo_inicial: Number(saldo.replace(',', '.')) || 0 },
+        account?.id,
+      )
+      onSaved()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No se pudo guardar.')
+      setSaving(false)
+    }
+  }
+
+  async function handleDelete() {
+    if (!account) return
+    if (!window.confirm(`¿Eliminar "${account.nombre}"? Se borrarán también sus movimientos.`)) return
+    setSaving(true)
+    try {
+      await deleteAccount(account.id)
+      onSaved()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No se pudo eliminar.')
+      setSaving(false)
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      <Field label="Nombre">
+        <input value={nombre} onChange={(e) => setNombre(e.target.value)} maxLength={60} className={inputCls} required />
+      </Field>
+      <Field label="Tipo">
+        <select value={tipo} onChange={(e) => setTipo(e.target.value as AccountType)} className={inputCls}>
+          {tipos.map((t) => (
+            <option key={t.value} value={t.value}>
+              {t.label}
+            </option>
+          ))}
+        </select>
+      </Field>
+      <Field label="Saldo inicial" hint="Saldo con el que empiezas a registrar movimientos.">
+        <input inputMode="decimal" value={saldo} onChange={(e) => setSaldo(e.target.value)} className={inputCls} />
+      </Field>
+
+      {error && <p className="text-sm text-red-600" role="alert">{error}</p>}
+
+      <button type="submit" disabled={saving} className={primaryBtn}>
+        {saving ? 'Guardando…' : 'Guardar'}
+      </button>
+      {account && (
+        <button type="button" onClick={handleDelete} disabled={saving} className={dangerBtn}>
+          Eliminar cuenta
+        </button>
+      )}
+    </form>
+  )
+}
