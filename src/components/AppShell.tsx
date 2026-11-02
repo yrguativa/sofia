@@ -39,7 +39,7 @@ export function AppShell() {
 
       <div className="mx-auto min-h-dvh max-w-md pb-32 lg:ml-72 lg:max-w-none lg:pb-12">
         <main className="px-5 pt-6 lg:px-10 lg:pt-10">
-          <div className="lg:mx-auto lg:max-w-6xl">
+          <div className="animate-page lg:mx-auto lg:max-w-6xl">
             <Outlet />
           </div>
         </main>

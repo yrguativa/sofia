@@ -198,6 +198,29 @@ export async function deleteEntry(id: string) {
   check(await supabase.from('budget_entries').delete().eq('id', id))
 }
 
+
+export async function listSalarioHistorial() {
+  return unwrap<Array<{ id: string; desde: string; monto: number }>>(
+    await supabase
+      .from('salario_historial')
+      .select('id,desde,monto')
+      .order('desde', { ascending: false }),
+  )
+}
+
+export async function saveSalarioHistorial(desde: string, monto: number) {
+  const user_id = await currentUserId()
+  check(
+    await supabase
+      .from('salario_historial')
+      .upsert({ user_id, desde: `${desde}-01`, monto }, { onConflict: 'user_id,desde' }),
+  )
+}
+
+export async function deleteSalarioHistorial(id: string) {
+  check(await supabase.from('salario_historial').delete().eq('id', id))
+}
+
 export async function listGoals(): Promise<Goal[]> {
   const rows = unwrap<
     Array<Omit<Goal, 'objetivo' | 'ahorrado'> & { objetivo: string | number; ahorrado: string | number }>

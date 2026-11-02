@@ -4,6 +4,8 @@ import { useCallback, useState, type FormEvent } from 'react'
 import { Sheet } from '../components/Sheet'
 import { Card, Empty, ErrorText, Field, Loading, PageHeader, dangerBtn, inputCls, primaryBtn } from '../components/ui'
 import { deleteAccount, getProfile, listAccounts, listTransactions, saveAccount } from '../lib/db'
+import { Icon } from '../components/icons'
+import { tipoCuentaIcon } from '../components/iconPaths'
 import { computeBalances } from '../lib/finance'
 import { formatMoney } from '../lib/format'
 import { useLoad } from '../lib/useLoad'
@@ -61,7 +63,9 @@ export function AccountsPage() {
             <button key={a.id} type="button" onClick={() => setEditing(a)} className="text-left transition active:scale-[0.99]">
               <Card className="flex items-center justify-between p-4">
                 <div className="flex items-center gap-3">
-                  <span className="h-11 w-11 rounded-2xl bg-acid" />
+                  <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-acid text-ink">
+                    <Icon className="h-5 w-5">{tipoCuentaIcon[a.tipo]}</Icon>
+                  </span>
                   <div>
                     <p className="font-medium text-ink">{a.nombre}</p>
                     <p className="text-xs uppercase tracking-wide text-zinc-500">

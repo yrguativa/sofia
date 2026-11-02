@@ -4,6 +4,8 @@ import { useCallback, useState, type FormEvent } from 'react'
 import { Sheet } from '../components/Sheet'
 import { Card, Empty, ErrorText, Field, Loading, PageHeader, ProgressBar, dangerBtn, inputCls, primaryBtn, secondaryBtn } from '../components/ui'
 import { deleteGoal, getProfile, listGoals, saveGoal } from '../lib/db'
+import { Icon } from '../components/icons'
+import { icons } from '../components/iconPaths'
 import { formatMoney } from '../lib/format'
 import { useLoad } from '../lib/useLoad'
 import type { Goal } from '../lib/types'
@@ -54,9 +56,14 @@ export function GoalsPage() {
             return (
               <Card key={g.id} className="p-5">
                 <div className="mb-3 flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="truncate font-semibold text-ink">{g.nombre}</p>
-                    {g.fecha_meta && <p className="text-xs text-zinc-500">Meta: {g.fecha_meta}</p>}
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-mist text-ink">
+                      <Icon className="h-5 w-5">{icons.metas}</Icon>
+                    </span>
+                    <div className="min-w-0">
+                      <p className="truncate font-semibold text-ink">{g.nombre}</p>
+                      {g.fecha_meta && <p className="text-xs text-zinc-500">Meta: {g.fecha_meta}</p>}
+                    </div>
                   </div>
                   <span className="shrink-0 rounded-full bg-acid px-3 py-1 text-xs font-semibold text-ink">
                     {Math.min(100, Math.round(pct))}%

@@ -14,6 +14,8 @@ import {
 } from '../components/ui'
 import { parseMoney } from '../lib/money'
 import { deletePlanItem, listCategories, listPlanItems, savePlanItem } from '../lib/db'
+import { Icon } from '../components/icons'
+import { grupoIcon } from '../components/iconPaths'
 import { useLoad } from '../lib/useLoad'
 import { grupos, type MontoTipo, type PlanItem } from '../lib/types'
 
@@ -68,8 +70,9 @@ export function PlanPage() {
                     onClick={() => setEditing(i)}
                     className="flex items-center justify-between px-5 py-3 text-left"
                   >
-                    <span className="min-w-0">
-                      <span className={`block truncate font-medium ${i.activo ? 'text-slate-900' : 'text-slate-400 line-through'}`}>
+                    <span className="flex min-w-0 items-center gap-2">
+                      <Icon className="h-4 w-4 shrink-0 text-zinc-400">{grupoIcon[i.grupo]}</Icon>
+                      <span className={`truncate font-medium ${i.activo ? 'text-slate-900' : 'text-slate-400 line-through'}`}>
                         {i.nombre}
                       </span>
                       <span className="text-xs text-slate-500">

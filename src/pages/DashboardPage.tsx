@@ -2,7 +2,7 @@ import { useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { Icon } from '../components/icons'
-import { icons } from '../components/iconPaths'
+import { icons, tipoCuentaIcon } from '../components/iconPaths'
 import { TransactionRow } from '../components/TransactionRow'
 import { Card, Empty, ErrorText, Loading, SectionTitle } from '../components/ui'
 import { getProfile, listAccounts, listCategories, listTransactions } from '../lib/db'
@@ -133,11 +133,16 @@ export function DashboardPage() {
           <div className="-mx-5 flex gap-3 overflow-x-auto px-5 pb-1 lg:mx-0 lg:flex-col lg:overflow-visible lg:px-0">
             {accounts.map((a) => (
               <div key={a.id} className="min-w-44 shrink-0 rounded-[24px] bg-white p-5 shadow-sm lg:flex lg:min-w-0 lg:items-center lg:justify-between">
-                <div>
-                  <span className="mb-4 inline-block rounded-full bg-acid px-3 py-1 text-xs font-semibold uppercase tracking-wide text-ink lg:mb-2">
-                    {a.tipo}
+                <div className="flex items-center gap-3">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-full bg-acid text-ink">
+                    <Icon className="h-5 w-5">{tipoCuentaIcon[a.tipo]}</Icon>
                   </span>
-                  <p className="truncate font-medium text-zinc-600">{a.nombre}</p>
+                  <div>
+                    <span className="mb-1 inline-block rounded-full bg-mist px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-ink">
+                      {a.tipo}
+                    </span>
+                    <p className="truncate font-medium text-zinc-600">{a.nombre}</p>
+                  </div>
                 </div>
                 <p className="mt-1 text-lg font-bold text-ink lg:mt-0">{formatMoney(balances[a.id] ?? 0, moneda)}</p>
               </div>

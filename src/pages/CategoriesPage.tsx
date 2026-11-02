@@ -1,6 +1,8 @@
 import { useCallback, useState, type FormEvent } from 'react'
 import { Card, Empty, ErrorText, Loading, PageHeader, SectionTitle, inputCls, primaryBtn } from '../components/ui'
 import { createCategory, deleteCategory, listCategories } from '../lib/db'
+import { Icon } from '../components/icons'
+import { icons } from '../components/iconPaths'
 import { useLoad } from '../lib/useLoad'
 import type { Category, CategoryType } from '../lib/types'
 
@@ -42,7 +44,8 @@ function CategoryList({ items, onChanged, removable = false }: { items: Category
     <Card className="flex flex-col divide-y divide-mist p-0">
       {items.map((c) => (
         <div key={c.id} className="flex items-center justify-between px-5 py-4">
-          <span className="text-ink">
+          <span className="flex items-center gap-2 text-ink">
+            <Icon className="h-4 w-4 text-zinc-400">{icons.categorias}</Icon>
             {c.icono ? `${c.icono} ` : ''}
             {c.nombre}
             <span className="ml-2 text-xs text-zinc-500">{c.tipo === 'ingreso' ? 'Ingreso' : 'Gasto'}</span>

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { Sheet } from '../components/Sheet'
 import { MoneyInput } from '../components/MoneyInput'
 import { Icon } from '../components/icons'
-import { icons, tipoCuentaIcon } from '../components/iconPaths'
+import { icons, tipoCuentaIcon, grupoIcon } from '../components/iconPaths'
 import { colorPorCuenta, fondosPago } from '../components/estadoPago'
 import {
   Card,
@@ -191,7 +191,10 @@ function BudgetsContent({ mesInicial }: { mesInicial: string }) {
           if (items.length === 0) return null
           return (
             <section key={g} className="mb-6">
-              <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{g}</h2>
+              <h2 className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <Icon className="h-4 w-4">{grupoIcon[g]}</Icon>
+                {g}
+              </h2>
               <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                 {items.map((e) => (
                   <EntryRow
