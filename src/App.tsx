@@ -13,6 +13,7 @@ import { GoalsPage } from './pages/GoalsPage'
 import { MorePage } from './pages/MorePage'
 import { CategoriesPage } from './pages/CategoriesPage'
 import { SimulatorPage } from './pages/SimulatorPage'
+import { ResetPasswordPage } from './pages/ResetPasswordPage'
 
 export default function App() {
   return (
@@ -20,6 +21,7 @@ export default function App() {
       <BrowserRouter basename={import.meta.env.BASE_URL}>
         <Routes>
           <Route path="/login" element={<Guard allow="signed_out"><LoginPage /></Guard>} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/mfa/setup" element={<Guard allow="mfa_enroll"><MfaSetupPage /></Guard>} />
           <Route path="/mfa/verify" element={<Guard allow="mfa_verify"><MfaVerifyPage /></Guard>} />
           <Route path="/" element={<Guard allow="ready"><AppShell /></Guard>}>

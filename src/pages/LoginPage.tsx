@@ -45,7 +45,8 @@ export function LoginPage() {
       setError('Escribe tu correo para recuperar la contraseña.')
       return
     }
-    const { error } = await supabase.auth.resetPasswordForEmail(email)
+    const redirectTo = `${window.location.origin}${import.meta.env.BASE_URL}reset-password`
+    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo })
     if (error) setError(error.message)
     else setInfo('Si el correo existe, recibirás un enlace para restablecer tu contraseña.')
   }
