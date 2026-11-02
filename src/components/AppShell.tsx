@@ -38,7 +38,7 @@ export function AppShell() {
         </nav>
       </aside>
 
-      <div className="mx-auto min-h-dvh max-w-md pb-32 lg:ml-72 lg:max-w-none lg:pb-12">
+      <div className="min-h-dvh w-full pb-32 lg:ml-72 lg:max-w-none lg:pb-12">
         <main className="px-5 pt-6 lg:px-10 lg:pt-10">
           <div className="animate-page lg:mx-auto lg:max-w-6xl">
             <Outlet />
@@ -47,7 +47,7 @@ export function AppShell() {
       </div>
 
       <nav className="fixed inset-x-0 bottom-5 z-40 px-5 pb-[env(safe-area-inset-bottom)] lg:hidden">
-        <div className="mx-auto flex max-w-md items-center justify-between gap-1 rounded-full bg-ink p-1.5 shadow-2xl">
+        <div className="mx-auto flex w-full max-w-md items-center justify-between gap-1 rounded-full bg-ink p-1.5 shadow-2xl sm:max-w-sm">
           {tabs.map((t) => (
             <NavLink
               key={t.to}

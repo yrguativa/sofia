@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { Card, ErrorText, Field, Loading, PageHeader, dangerBtn, inputCls, primaryBtn, secondaryBtn } from '../components/ui'
 import { Icon } from '../components/icons'
 import { icons } from '../components/iconPaths'
-import { deleteDebt, getProfile, listDebts, saveDebt } from '../lib/db'
+import { deleteDebt, getProfile, listDebts, saveDebt, updateDebtSaldo } from '../lib/db'
 import { formatMoney } from '../lib/format'
 import { MoneyInput } from '../components/MoneyInput'
 import { parseMoney } from '../lib/money'
@@ -18,6 +18,7 @@ export function DebtDetailPage() {
   const [editing, setEditing] = useState(false)
   const [abono, setAbono] = useState('')
   const [mostrarAbono, setMostrarAbono] = useState(false)
+  const [pagados, setPagados] = useState<Set<number>>(new Set())
 
   const loader = useCallback(async () => {
     const [profile, debts] = await Promise.all([getProfile(), listDebts()])
@@ -39,6 +40,14 @@ export function DebtDetailPage() {
     ? simularPrestamo(Math.max(0, debt.monto_total - parseMoney(abono)), debt.tasa_interes, debt.cuotas)
     : null
   const abonoNum = parseMoney(abono)
+
+  async function marcarPagado(mes: number, monto: number) {
+    if (pagados.has(mes)) return
+    const nuevoSaldo = Math.max(0, debt.saldo_pendiente - monto)
+    await updateDebtSaldo(debt.id, nuevoSaldo)
+    setPagados((prev) => new Set(prev).add(mes))
+    reload()
+  }
 
   async function handleDelete() {
     if (!window.confirm(`¿Eliminar "${debt.nombre}"?`)) return
@@ -164,7 +173,7 @@ export function DebtDetailPage() {
             <p className="font-semibold text-ink">{debt.cuotas}</p>
           </div>
         </div>
-        <div className="max-h-96 overflow-y-auto">
+        <div className="max-h-96 overflow-x-auto overflow-y-auto">
           <table className="w-full text-sm">
             <thead className="sticky top-0 bg-white">
               <tr className="border-b border-zinc-200 text-zinc-500">
@@ -173,18 +182,38 @@ export function DebtDetailPage() {
                 <th className="pb-2 text-right">Capital</th>
                 <th className="pb-2 text-right">Interés</th>
                 <th className="pb-2 text-right">Saldo</th>
+                <th className="pb-2 text-right">Acción</th>
               </tr>
             </thead>
             <tbody>
-              {resultado.amortizacion.map((a) => (
-                <tr key={a.mes} className="border-b border-zinc-100">
-                  <td className="py-2">{a.mes}</td>
-                  <td className="py-2 text-right">{formatMoney(a.cuota, moneda)}</td>
-                  <td className="py-2 text-right">{formatMoney(a.capital, moneda)}</td>
-                  <td className="py-2 text-right">{formatMoney(a.interes, moneda)}</td>
-                  <td className="py-2 text-right">{formatMoney(a.saldo, moneda)}</td>
-                </tr>
-              ))}
+              {resultado.amortizacion.map((a) => {
+                const pagado = pagados.has(a.mes) || a.mes <= Math.floor((debt.monto_total - debt.saldo_pendiente) / debt.cuota_mensual)
+                return (
+                  <tr key={a.mes} className={`border-b border-zinc-100 ${pagado ? 'bg-emerald-50' : ''}`}>
+                    <td className="py-2">{a.mes}</td>
+                    <td className="py-2 text-right">{formatMoney(a.cuota, moneda)}</td>
+                    <td className="py-2 text-right">{formatMoney(a.capital, moneda)}</td>
+                    <td className="py-2 text-right">{formatMoney(a.interes, moneda)}</td>
+                    <td className="py-2 text-right">{formatMoney(a.saldo, moneda)}</td>
+                    <td className="py-2 text-right">
+                      {pagado ? (
+                        <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-600">
+                          <Icon className="h-3.5 w-3.5">{icons.check}</Icon>
+                          Pagado
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => marcarPagado(a.mes, a.cuota)}
+                          className="rounded-full bg-ink px-3 py-1 text-xs font-medium text-acid transition active:scale-95"
+                        >
+                          Pagar
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
         </div>
