@@ -113,7 +113,7 @@ export async function listPlanItems(): Promise<PlanItem[]> {
   const rows = unwrap<Array<Omit<PlanItem, 'valor'> & { valor: string | number }>>(
     await supabase
       .from('plan_items')
-      .select('id,nombre,grupo,categoria_id,tipo_monto,valor,activo,orden')
+      .select('id,nombre,grupo,categoria_id,tipo_monto,valor,activo,orden,debt_id')
       .order('orden')
       .order('nombre'),
   )
@@ -160,7 +160,7 @@ export async function listEntries(mes: string): Promise<BudgetEntry[]> {
     await supabase
       .from('budget_entries')
       .select(
-        'id,mes,plan_item_id,nombre,grupo,categoria_id,tipo_monto,valor,monto,transaction_id,metodo_pago,transaction:transactions(account_id)',
+        'id,mes,plan_item_id,nombre,grupo,categoria_id,tipo_monto,valor,monto,transaction_id,metodo_pago,debt_id,transaction:transactions(account_id)',
       )
       .eq('mes', `${mes}-01`)
       .order('nombre'),
@@ -178,6 +178,7 @@ export async function listEntries(mes: string): Promise<BudgetEntry[]> {
     transaction_id: r.transaction_id,
     cuenta_id: r.transaction?.account_id ?? null,
     metodo_pago: r.metodo_pago as 'pago' | 'bolsillo' | null,
+    debt_id: r.debt_id,
   }))
 }
 

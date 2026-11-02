@@ -53,6 +53,7 @@ export type PlanItem = {
   valor: number
   activo: boolean
   orden: number
+  debt_id: string | null
 }
 
 export type PlanItemInput = Omit<PlanItem, 'id'>
@@ -70,6 +71,7 @@ export type BudgetEntry = {
   transaction_id: string | null
   cuenta_id: string | null
   metodo_pago: 'pago' | 'bolsillo' | null
+  debt_id: string | null
 }
 
 export type Goal = {

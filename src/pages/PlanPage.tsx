@@ -13,7 +13,7 @@ import {
   primaryBtn,
 } from '../components/ui'
 import { parseMoney } from '../lib/money'
-import { deletePlanItem, listCategories, listPlanItems, savePlanItem } from '../lib/db'
+import { deletePlanItem, listCategories, listDebts, listPlanItems, savePlanItem } from '../lib/db'
 import { Icon } from '../components/icons'
 import { grupoIcon } from '../components/iconPaths'
 import { useLoad } from '../lib/useLoad'
@@ -23,8 +23,8 @@ export function PlanPage() {
   const [editing, setEditing] = useState<PlanItem | 'new' | null>(null)
 
   const loader = useCallback(async () => {
-    const [items, categories] = await Promise.all([listPlanItems(), listCategories()])
-    return { items, categories }
+    const [items, categories, debts] = await Promise.all([listPlanItems(), listCategories(), listDebts()])
+    return { items, categories, debts }
   }, [])
 
   const { data, error, reload } = useLoad(loader)
@@ -94,6 +94,7 @@ export function PlanPage() {
           <PlanItemForm
             item={editing === 'new' ? null : editing}
             categories={data.categories.filter((c) => c.tipo === 'gasto')}
+            debts={data.debts}
             onSaved={close}
           />
         </Sheet>
@@ -105,10 +106,12 @@ export function PlanPage() {
 function PlanItemForm({
   item,
   categories,
+  debts,
   onSaved,
 }: {
   item: PlanItem | null
   categories: { id: string; nombre: string; icono: string | null }[]
+  debts: { id: string; nombre: string }[]
   onSaved: () => void
 }) {
   const [nombre, setNombre] = useState(item?.nombre ?? '')
@@ -117,6 +120,7 @@ function PlanItemForm({
   const [tipo, setTipo] = useState<MontoTipo>(item?.tipo_monto ?? 'valor')
   const [valor, setValor] = useState(item ? String(item.valor) : '')
   const [activo, setActivo] = useState(item?.activo ?? true)
+  const [debtId, setDebtId] = useState(item?.debt_id ?? '')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -138,6 +142,7 @@ function PlanItemForm({
           valor: numero,
           activo,
           orden: item?.orden ?? 0,
+          debt_id: debtId || null,
         },
         item?.id,
       )
@@ -184,6 +189,17 @@ function PlanItemForm({
             <option key={c.id} value={c.id}>
               {c.icono ? `${c.icono} ` : ''}
               {c.nombre}
+            </option>
+          ))}
+        </select>
+      </Field>
+
+      <Field label="Vincular a deuda (opcional)" hint="Al pagar este item, se aplicará el pago a la deuda vinculada.">
+        <select value={debtId} onChange={(e) => setDebtId(e.target.value)} className={inputCls}>
+          <option value="">Sin deuda vinculada</option>
+          {debts.map((d) => (
+            <option key={d.id} value={d.id}>
+              {d.nombre}
             </option>
           ))}
         </select>
