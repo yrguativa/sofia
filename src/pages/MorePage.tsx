@@ -1,4 +1,4 @@
-import { useCallback, useState, type FormEvent } from 'react'
+import { useCallback, useState, type FormEvent, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { Icon } from '../components/icons'
@@ -23,36 +23,56 @@ export function MorePage() {
     <>
       <PageHeader title="Más" />
 
-      <Card className="mb-6 flex flex-col divide-y divide-mist p-0">
-        <MenuLink to="/cuentas" label="Cuentas" />
-        <MenuLink to="/categorias" label="Categorías" />
-        <MenuLink to="/plantilla" label="Plantilla de presupuesto" />
-        <MenuLink to="/simulador" label="Simulador" />
-      </Card>
+      <div className="grid gap-6 lg:grid-cols-2 lg:items-start">
+        <div className="flex flex-col gap-6">
+          <Card className="flex flex-col divide-y divide-mist p-0">
+            <MenuLink to="/cuentas" label="Cuentas" icon={icons.cuentas} />
+            <MenuLink to="/categorias" label="Categorías" icon={icons.categorias} />
+            <MenuLink to="/plantilla" label="Plantilla de presupuesto" icon={icons.plantilla} />
+            <MenuLink to="/simulador" label="Simulador" icon={icons.simulador} />
+          </Card>
 
-      <Card className="mb-6">
-        <h2 className="mb-5 text-lg font-semibold text-ink">Perfil</h2>
-        <ProfileForm profile={data} onSaved={reload} />
-      </Card>
+          <section className="rounded-[28px] bg-ink p-6 text-white">
+            <div className="flex items-center gap-3">
+              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-acid text-ink">
+                <Icon className="h-5 w-5">{icons.seguridad}</Icon>
+              </span>
+              <h2 className="font-semibold text-acid">Seguridad</h2>
+            </div>
+            <p className="mt-3 text-sm text-zinc-400">
+              La verificación en dos pasos está activa. Tus códigos se guardan en KeePass.
+            </p>
+          </section>
+        </div>
 
-      <section className="mb-6 rounded-[28px] bg-ink p-6 text-white">
-        <h2 className="font-semibold text-acid">Seguridad</h2>
-        <p className="mt-2 text-sm text-zinc-400">
-          La verificación en dos pasos está activa. Tus códigos se guardan en KeePass.
-        </p>
-      </section>
+        <div className="flex flex-col gap-6">
+          <Card>
+            <div className="mb-5 flex items-center gap-3">
+              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-mist text-ink">
+                <Icon className="h-5 w-5">{icons.usuario}</Icon>
+              </span>
+              <h2 className="text-lg font-semibold text-ink">Perfil</h2>
+            </div>
+            <ProfileForm profile={data} onSaved={reload} />
+          </Card>
 
-      <button type="button" onClick={signOut} className={`${secondaryBtn} w-full`}>
-        Cerrar sesión
-      </button>
+          <button type="button" onClick={signOut} className={`${secondaryBtn} w-full gap-2`}>
+            <Icon className="h-4 w-4">{icons.logout}</Icon>
+            Cerrar sesión
+          </button>
+        </div>
+      </div>
     </>
   )
 }
 
-function MenuLink({ to, label }: { to: string; label: string }) {
+function MenuLink({ to, label, icon }: { to: string; label: string; icon: ReactNode }) {
   return (
-    <Link to={to} className="flex items-center justify-between px-5 py-4 font-medium text-ink transition active:bg-mist">
-      {label}
+    <Link to={to} className="flex items-center gap-4 px-5 py-4 font-medium text-ink transition active:bg-mist hover:bg-mist/60">
+      <span className="flex h-10 w-10 items-center justify-center rounded-full bg-mist">
+        <Icon className="h-5 w-5">{icon}</Icon>
+      </span>
+      <span className="flex-1">{label}</span>
       <span className="text-zinc-400">
         <Icon className="h-4 w-4">{icons.chevronRight}</Icon>
       </span>
