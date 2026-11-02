@@ -83,6 +83,7 @@ function MenuLink({ to, label, icon }: { to: string; label: string; icon: ReactN
 function ProfileForm({ profile, onSaved }: { profile: Profile; onSaved: () => void }) {
   const [nombre, setNombre] = useState(profile.nombre ?? '')
   const [moneda, setMoneda] = useState(profile.moneda)
+  const [diaPago, setDiaPago] = useState(String(profile.dia_pago))
   const [saving, setSaving] = useState(false)
   const [info, setInfo] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -93,7 +94,7 @@ function ProfileForm({ profile, onSaved }: { profile: Profile; onSaved: () => vo
     setError(null)
     setInfo(null)
     try {
-      await updateProfile({ nombre: nombre.trim(), moneda })
+      await updateProfile({ nombre: nombre.trim(), moneda, dia_pago: Number(diaPago) })
       setInfo('Perfil actualizado.')
       onSaved()
     } catch (err) {
@@ -113,6 +114,18 @@ function ProfileForm({ profile, onSaved }: { profile: Profile; onSaved: () => vo
           {monedas.map((m) => (
             <option key={m} value={m}>
               {m}
+            </option>
+          ))}
+        </select>
+      </Field>
+      <Field
+        label="Día de pago del salario"
+        hint="Hasta ese día, Presupuesto y Movimientos muestran el mes anterior."
+      >
+        <select value={diaPago} onChange={(e) => setDiaPago(e.target.value)} className={inputCls}>
+          {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
+            <option key={d} value={d}>
+              Día {d}
             </option>
           ))}
         </select>
