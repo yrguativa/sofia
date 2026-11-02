@@ -4,7 +4,9 @@ import { useAuth } from '../auth/AuthContext'
 import { Icon } from '../components/icons'
 import { icons } from '../components/iconPaths'
 import { Card, ErrorText, Field, Loading, PageHeader, inputCls, primaryBtn, secondaryBtn } from '../components/ui'
+import { Sheet } from '../components/Sheet'
 import { getProfile, updateProfile } from '../lib/db'
+import { supabase } from '../lib/supabase'
 import { useLoad } from '../lib/useLoad'
 import type { Profile } from '../lib/types'
 
@@ -12,6 +14,9 @@ const monedas = ['COP', 'USD', 'EUR', 'MXN', 'ARS', 'CLP', 'PEN', 'BRL']
 
 export function MorePage() {
   const { signOut } = useAuth()
+  const [deleteOpen, setDeleteOpen] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
 
   const loader = useCallback(() => getProfile(), [])
   const { data, error, reload } = useLoad(loader)
@@ -63,8 +68,54 @@ export function MorePage() {
             <Icon className="h-4 w-4">{icons.logout}</Icon>
             Cerrar sesión
           </button>
+
+          <button
+            type="button"
+            onClick={() => { setDeleteError(null); setDeleteOpen(true) }}
+            className="w-full rounded-full bg-red-50 px-5 py-3 font-medium text-red-600 transition active:scale-[0.98]"
+          >
+            Eliminar cuenta
+          </button>
         </div>
       </div>
+
+      {deleteOpen && (
+        <Sheet title="Eliminar cuenta" onClose={() => setDeleteOpen(false)}>
+          <div className="flex flex-col gap-4">
+            <p className="text-sm text-red-600">
+              Esta acción es irreversible. Se borrarán todos tus datos (cuentas, movimientos, presupuestos, metas, deudas, categorías) y tu cuenta de acceso.
+            </p>
+            {deleteError && <ErrorText>{deleteError}</ErrorText>}
+            <button
+              type="button"
+              disabled={deleting}
+              onClick={async () => {
+                setDeleting(true)
+                setDeleteError(null)
+                try {
+                  const { error } = await supabase.rpc('delete_my_account')
+                  if (error) throw new Error(error.message)
+                  await signOut()
+                } catch (err) {
+                  setDeleteError(err instanceof Error ? err.message : 'No se pudo eliminar la cuenta.')
+                  setDeleting(false)
+                }
+              }}
+              className="w-full rounded-full bg-red-600 px-5 py-3 font-medium text-white transition active:scale-[0.98] disabled:opacity-60"
+            >
+              {deleting ? 'Eliminando…' : 'Sí, eliminar mi cuenta'}
+            </button>
+            <button
+              type="button"
+              onClick={() => setDeleteOpen(false)}
+              disabled={deleting}
+              className={`${secondaryBtn} w-full`}
+            >
+              Cancelar
+            </button>
+          </div>
+        </Sheet>
+      )}
     </>
   )
 }
