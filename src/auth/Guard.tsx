@@ -1,13 +1,7 @@
 import type { ReactNode } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useAuth, type AuthStatus } from './AuthContext'
-
-export const routeFor: Record<Exclude<AuthStatus, 'loading'>, string> = {
-  signed_out: '/login',
-  mfa_enroll: '/mfa/setup',
-  mfa_verify: '/mfa/verify',
-  ready: '/',
-}
+import { routeFor } from './routes'
 
 export function Guard({ allow, children }: { allow: AuthStatus; children: ReactNode }) {
   const { status } = useAuth()
