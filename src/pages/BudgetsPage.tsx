@@ -311,7 +311,7 @@ function EntryRow({
   const detalle = entry.tipo_monto === 'porcentaje' ? `${entry.valor}% del salario` : 'Valor fijo'
 
   return (
-    <div className={`flex flex-col gap-4 rounded-[22px] p-4 shadow-sm ${fondosPago[color ?? 'neutro']}`}>
+    <div className={`group flex flex-col gap-4 rounded-[22px] p-4 shadow-sm ${fondosPago[color ?? 'neutro']}`}>
       <div className="flex items-start justify-between gap-3">
         <button
           type="button"
@@ -320,14 +320,21 @@ function EntryRow({
           className="min-w-0 flex-1 text-left disabled:cursor-default"
         >
           <p className="truncate font-medium text-ink">{entry.nombre}</p>
-          <p className="text-xs text-zinc-500">
-            {detalle}
-            {pagado && cuenta ? ` · pagado desde ${cuenta.nombre}` : ''}
-          </p>
+          <p className="text-xs text-zinc-500">{detalle}</p>
+          <span className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-white/70 px-2.5 py-1 text-xs font-medium text-ink">
+            <Icon className="h-3.5 w-3.5">
+              {pagado ? (cuenta ? tipoCuentaIcon[cuenta.tipo] : icons.check) : icons.pendiente}
+            </Icon>
+            {pagado ? (cuenta ? `Pagado desde ${cuenta.nombre}` : 'Pagado') : 'Pendiente'}
+          </span>
         </button>
         <p className="whitespace-nowrap font-semibold text-ink">{formatMoney(entry.monto, moneda)}</p>
       </div>
-      <button type="button" onClick={onPagar} className={`${pagado ? secondaryBtn : primaryBtn} w-full gap-2`}>
+      <button
+        type="button"
+        onClick={onPagar}
+        className={`${pagado ? `${secondaryBtn} opacity-0 group-focus-within:opacity-100 group-hover:opacity-100` : primaryBtn} w-full gap-2 transition-opacity`}
+      >
         <Icon className="h-4 w-4">{icons.salario}</Icon>
         {pagado ? 'Cambiar pago' : 'Pagar'}
       </button>
