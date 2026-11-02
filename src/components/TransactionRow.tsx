@@ -1,5 +1,7 @@
 import { formatMoney } from '../lib/format'
 import type { Account, Category, Transaction } from '../lib/types'
+import { Icon } from './icons'
+import { icons, tipoMovimientoIcon } from './iconPaths'
 
 type Props = {
   tx: Transaction
@@ -9,6 +11,12 @@ type Props = {
   onClick?: () => void
 }
 
+const estilos = {
+  ingreso: 'bg-emerald-50 text-emerald-700',
+  gasto: 'bg-red-50 text-red-600',
+  transferencia: 'bg-mist text-zinc-600',
+} as const
+
 export function TransactionRow({ tx, accounts, categories, moneda, onClick }: Props) {
   const cat = categories.find((c) => c.id === tx.category_id)
   const origen = accounts.find((a) => a.id === tx.account_id)
@@ -16,7 +24,6 @@ export function TransactionRow({ tx, accounts, categories, moneda, onClick }: Pr
 
   const isTransfer = tx.tipo === 'transferencia'
   const title = isTransfer ? `Transferencia a ${destino?.nombre ?? '—'}` : (cat?.nombre ?? 'Sin categoría')
-  const icon = isTransfer ? '🔁' : (cat?.icono ?? '•')
   const signo = tx.tipo === 'ingreso' ? '+' : tx.tipo === 'gasto' ? '−' : ''
   const color =
     tx.tipo === 'ingreso' ? 'text-emerald-600' : tx.tipo === 'gasto' ? 'text-red-600' : 'text-zinc-700'
@@ -25,9 +32,11 @@ export function TransactionRow({ tx, accounts, categories, moneda, onClick }: Pr
     <button
       type="button"
       onClick={onClick}
-      className="flex w-full items-center gap-3 rounded-[22px] bg-white p-3 pr-4 text-left shadow-sm transition active:scale-[0.99]"
+      className="group flex w-full items-center gap-3 rounded-[22px] bg-white p-3 pr-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md active:scale-[0.99]"
     >
-      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-mist text-xl">{icon}</span>
+      <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${estilos[tx.tipo]}`}>
+        <Icon className="h-5 w-5">{tipoMovimientoIcon[tx.tipo]}</Icon>
+      </span>
       <span className="min-w-0 flex-1">
         <span className="block truncate font-medium text-ink">{title}</span>
         <span className="block truncate text-xs text-zinc-500">
@@ -38,6 +47,9 @@ export function TransactionRow({ tx, accounts, categories, moneda, onClick }: Pr
       <span className={`whitespace-nowrap font-semibold ${color}`}>
         {signo}
         {formatMoney(tx.monto, moneda)}
+      </span>
+      <span className="hidden text-zinc-300 transition group-hover:text-ink lg:block">
+        <Icon className="h-4 w-4">{icons.chevronRight}</Icon>
       </span>
     </button>
   )

@@ -69,7 +69,7 @@ export function TransactionsPage() {
         [...grupos.entries()].map(([fecha, items]) => (
           <section key={fecha} className="mb-6">
             <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-zinc-500">{dayLabel(fecha)}</h2>
-            <div className="flex flex-col gap-3">
+            <div className="grid gap-3 lg:grid-cols-2">
               {items.map((t) => (
                 <TransactionRow
                   key={t.id}

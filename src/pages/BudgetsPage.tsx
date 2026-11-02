@@ -158,7 +158,7 @@ export function BudgetsPage() {
           return (
             <section key={g} className="mb-6">
               <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{g}</h2>
-              <div className="flex flex-col gap-2">
+              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                 {items.map((e) => (
                   <EntryRow
                     key={e.id}
