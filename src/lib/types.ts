@@ -14,6 +14,7 @@ export type Profile = {
   nombre: string | null
   moneda: string
   dia_pago: number
+  onboarding_visto: boolean
 }
 
 export type Account = {

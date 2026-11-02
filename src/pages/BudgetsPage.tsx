@@ -31,7 +31,6 @@ import {
   listIngresosAdicionales,
   listEntries,
   listPlanItems,
-  saveAccount,
   saveBolsillo,
   saveIngresoAdicional,
   updateBolsilloSaldo,
@@ -563,7 +562,6 @@ function PagoForm({
   accounts: Account[]
   onConfirm: (metodo: string | null, cuentaId: string | null, bolsilloId: string | null) => Promise<string | null>
 }) {
-  const [localAccounts, setLocalAccounts] = useState<Account[]>(accounts)
   const [metodo, setMetodo] = useState<string | null>(entry.metodo_pago)
   const [cuentaId, setCuentaId] = useState<string | null>(entry.cuenta_id)
   const [bolsillos, setBolsillos] = useState<Bolsillo[]>([])
@@ -573,10 +571,10 @@ function PagoForm({
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const cuentasPago = localAccounts.filter((a) => a.tipo !== 'efectivo')
-  const cuentasBolsillo = localAccounts.filter((a) => a.tipo === 'efectivo')
+  const cuentasPago = accounts.filter((a) => a.tipo !== 'efectivo')
+  const cuentasBolsillo = accounts.filter((a) => a.tipo === 'efectivo')
   const cuentasDisponibles = metodo === 'bolsillo' ? cuentasBolsillo : cuentasPago
-  const lista = cuentasDisponibles.length > 0 ? cuentasDisponibles : localAccounts
+  const lista = cuentasDisponibles.length > 0 ? cuentasDisponibles : accounts
 
   useEffect(() => {
     if (!cuentaId) { setBolsillos([]); return }
@@ -693,25 +691,46 @@ function PagoForm({
         </Field>
       )}
 
-      {metodo === 'bolsillo' && (
+      {metodo === 'bolsillo' && cuentaId && (
         <div className="rounded-[20px] bg-mist p-4">
-          <p className="mb-2 text-xs text-zinc-500">Crear un nuevo bolsillo (cuenta de efectivo)</p>
+          <p className="mb-2 text-xs text-zinc-500">Bolsillos de esta cuenta</p>
+          {bolsillos.length > 0 ? (
+            <div className="mb-3 flex flex-wrap gap-2">
+              {bolsillos.map((b) => (
+                <button
+                  key={b.id}
+                  type="button"
+                  onClick={() => setBolsilloId(b.id)}
+                  className={`rounded-full px-3 py-1 text-xs font-medium transition ${bolsilloId === b.id ? 'bg-ink text-white' : 'bg-white text-ink'}`}
+                >
+                  {b.nombre} ({formatMoney(b.saldo, moneda)})
+                </button>
+              ))}
+            </div>
+          ) : (
+            <p className="mb-2 text-xs text-zinc-400">No hay bolsillos. Crea uno:</p>
+          )}
           <div className="flex gap-2">
             <input
-              value={nuevoBolsillo}
-              onChange={(e) => setNuevoBolsillo(e.target.value)}
+              value={nuevoBolsilloNombre}
+              onChange={(e) => setNuevoBolsilloNombre(e.target.value)}
               placeholder="Nombre del bolsillo"
               className={`${inputCls} flex-1`}
             />
             <button
               type="button"
               onClick={crearBolsillo}
-              disabled={creando}
+              disabled={creandoBolsillo}
               className={secondaryBtn}
             >
-              {creando ? 'Creando…' : 'Crear'}
+              {creandoBolsillo ? 'Creando…' : 'Crear'}
             </button>
           </div>
+          {bolsilloId && (
+            <p className="mt-2 text-xs text-zinc-500">
+              Seleccionado: {bolsillos.find((b) => b.id === bolsilloId)?.nombre}
+            </p>
+          )}
         </div>
       )}
 

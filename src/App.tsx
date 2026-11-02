@@ -20,6 +20,7 @@ import { DebtDetailPage } from './pages/DebtDetailPage'
 import { SalarioPage } from './pages/SalarioPage'
 import { IngresosPage } from './pages/IngresosPage'
 import { AtajosPage } from './pages/AtajosPage'
+import { OnboardingPage } from './pages/OnboardingPage'
 import { ResetPasswordPage } from './pages/ResetPasswordPage'
 import { PlanPage } from './pages/PlanPage'
 
@@ -67,6 +68,7 @@ export default function App() {
             <Route path="deudas" element={<DebtsPage />} />
             <Route path="deudas/:id" element={<DebtDetailPage />} />
             <Route path="atajos" element={<AtajosPage />} />
+            <Route path="onboarding" element={<OnboardingPage />} />
           </Route>
         </Routes>
       </BrowserRouter>

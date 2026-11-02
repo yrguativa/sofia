@@ -34,10 +34,10 @@ async function currentUserId(): Promise<string> {
 }
 
 export async function getProfile(): Promise<Profile> {
-  return unwrap<Profile>(await supabase.from('profiles').select('id,nombre,moneda,dia_pago').single())
+  return unwrap<Profile>(await supabase.from('profiles').select('id,nombre,moneda,dia_pago,onboarding_visto').single())
 }
 
-export async function updateProfile(patch: { nombre?: string; moneda?: string; dia_pago?: number }) {
+export async function updateProfile(patch: { nombre?: string; moneda?: string; dia_pago?: number; onboarding_visto?: boolean }) {
   const id = await currentUserId()
   check(await supabase.from('profiles').update(patch).eq('id', id))
 }

@@ -1,7 +1,9 @@
-import { NavLink, Outlet } from 'react-router-dom'
+import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { Brand } from './ui'
 import { Icon } from './icons'
 import { icons } from './iconPaths'
+import { getProfile } from '../lib/db'
+import { useEffect } from 'react'
 
 const tabs = [
   { to: '/', label: 'Inicio', end: true, icon: icons.home },
@@ -13,6 +15,14 @@ const tabs = [
 ]
 
 export function AppShell() {
+  const navigate = useNavigate()
+  useEffect(() => {
+    getProfile()
+      .then((p) => {
+        if (!p.onboarding_visto) navigate('/onboarding')
+      })
+      .catch(() => {})
+  }, [navigate])
   return (
     <div className="min-h-dvh lg:flex">
       <aside className="fixed inset-y-4 left-4 hidden w-60 flex-col rounded-[32px] bg-ink p-5 text-white lg:flex">

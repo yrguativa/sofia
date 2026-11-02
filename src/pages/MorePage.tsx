@@ -38,6 +38,7 @@ export function MorePage() {
             <MenuLink to="/ingresos" label="Ingresos adicionales" icon={icons.ingreso} />
             <MenuLink to="/simulador" label="Simulador" icon={icons.simulador} />
         <MenuLink to="/atajos" label="Atajos iOS" icon={icons.llave} />
+        <MenuLink to="/onboarding" label="Ver onboarding" icon={icons.ingreso} />
           </Card>
 
           <section className="rounded-[28px] bg-ink p-6 text-white">
