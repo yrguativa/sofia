@@ -1,22 +1,22 @@
 import { useCallback, useState, type FormEvent } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Card, ErrorText, Field, Loading, PageHeader, dangerBtn, inputCls, primaryBtn, secondaryBtn } from '../components/ui'
+import { Card, ErrorText, Field, Loading, PageHeader, inputCls, primaryBtn, secondaryBtn } from '../components/ui'
 import { Icon } from '../components/icons'
 import { icons } from '../components/iconPaths'
-import { deleteDebt, getProfile, listDebts, saveDebt, updateDebtSaldo } from '../lib/db'
+import { deleteDebt, getProfile, listDebts, saveDebt } from '../lib/db'
 import { formatMoney } from '../lib/format'
 import { MoneyInput } from '../components/MoneyInput'
 import { parseMoney } from '../lib/money'
 import { useLoad } from '../lib/useLoad'
-import { Sheet } from '../components/Sheet'
 import type { Debt } from '../lib/types'
-import { simularPrestamo } from '../lib/simulator'
+import { amortizarConAbonos, calcularAhorroInteres, type Abono, type TipoAbono } from '../lib/abonos'
+import { Sheet } from '../components/Sheet'
 
 function mesDeuda(fechaInicio: string, mes: number): string {
   const [y, m] = fechaInicio.split('-').map(Number)
   const d = new Date(y, m - 1 + (mes - 1), 1)
   const label = d.toLocaleDateString('es-CO', { month: 'short', year: 'numeric' })
-  return label.charAt(0).toUpperCase() + label.slice(1)
+  return `${mes}: ${label.charAt(0).toUpperCase() + label.slice(1)}`
 }
 
 export function DebtDetailPage() {
@@ -25,7 +25,11 @@ export function DebtDetailPage() {
   const [editing, setEditing] = useState(false)
   const [abono, setAbono] = useState('')
   const [mostrarAbono, setMostrarAbono] = useState(false)
-  const [pagados, setPagados] = useState<Set<number>>(new Set())
+  const [abonoModal, setAbonoModal] = useState<number | null>(null)
+  const [abonoMonto, setAbonoMonto] = useState('')
+  const [abonoTipo, setAbonoTipo] = useState<TipoAbono>('plazo')
+  const [abonos, setAbonos] = useState<Abono[]>([])
+  const [savingAbono, setSavingAbono] = useState(false)
 
   const loader = useCallback(async () => {
     const [profile, debts] = await Promise.all([getProfile(), listDebts()])
@@ -42,24 +46,30 @@ export function DebtDetailPage() {
   const { profile, debt } = data
   const moneda = profile.moneda
   const pct = debt.monto_total > 0 ? ((debt.monto_total - debt.saldo_pendiente) / debt.monto_total) * 100 : 0
-  const resultado = simularPrestamo(debt.monto_total, debt.tasa_interes, debt.cuotas)
-  const resultadoAbono = mostrarAbono && parseMoney(abono) > 0
-    ? simularPrestamo(Math.max(0, debt.monto_total - parseMoney(abono)), debt.tasa_interes, debt.cuotas)
-    : null
-  const abonoNum = parseMoney(abono)
-
-  async function marcarPagado(mes: number, monto: number) {
-    if (pagados.has(mes)) return
-    const nuevoSaldo = Math.max(0, debt.saldo_pendiente - monto)
-    await updateDebtSaldo(debt.id, nuevoSaldo)
-    setPagados((prev) => new Set(prev).add(mes))
-    reload()
-  }
+  const resultado = amortizarConAbonos(debt.monto_total, debt.tasa_interes, debt.cuotas, abonos)
+  const ahorroInteres = abonos.length > 0 ? calcularAhorroInteres(debt.monto_total, debt.tasa_interes, debt.cuotas, abonos) : 0
 
   async function handleDelete() {
     if (!window.confirm(`¿Eliminar "${debt.nombre}"?`)) return
     await deleteDebt(debt.id)
     navigate('/deudas')
+  }
+
+  async function guardarAbono() {
+    const monto = parseMoney(abonoMonto)
+    if (!(monto > 0) || abonoModal === null) return
+    setSavingAbono(true)
+    // Remove existing abono for this month if any
+    const nuevosAbonos = abonos.filter((a) => a.mes !== abonoModal)
+    nuevosAbonos.push({ mes: abonoModal, monto, tipo: abonoTipo })
+    setAbonos(nuevosAbonos)
+    setAbonoModal(null)
+    setAbonoMonto('')
+    setSavingAbono(false)
+  }
+
+  function eliminarAbono(mes: number) {
+    setAbonos((prev) => prev.filter((a) => a.mes !== mes))
   }
 
   return (
@@ -115,7 +125,8 @@ export function DebtDetailPage() {
               <Icon className="h-4 w-4">{icons.editar}</Icon>
               Editar
             </button>
-            <button type="button" onClick={handleDelete} className={`${dangerBtn} flex-1`}>
+            <button type="button" onClick={handleDelete} className={`${secondaryBtn} flex-1 gap-2 text-red-600`}>
+              <Icon className="h-4 w-4">{icons.eliminar}</Icon>
               Eliminar
             </button>
           </div>
@@ -132,27 +143,27 @@ export function DebtDetailPage() {
             </button>
           </div>
 
-          {resultadoAbono && (
+          {mostrarAbono && parseMoney(abono) > 0 && (
             <div className="mt-4 rounded-[24px] bg-emerald-50 p-5">
               <p className="text-sm font-medium text-emerald-800">
-                Con abono de {formatMoney(abonoNum, moneda)}
+                Con abono de {formatMoney(parseMoney(abono), moneda)}
               </p>
               <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
                 <div>
-                  <p className="text-xs text-zinc-500">Nuevo saldo</p>
-                  <p className="font-semibold text-ink">{formatMoney(debt.monto_total - abonoNum, moneda)}</p>
-                </div>
-                <div>
                   <p className="text-xs text-zinc-500">Nueva cuota</p>
-                  <p className="font-semibold text-ink">{formatMoney(resultadoAbono.cuota, moneda)}</p>
+                  <p className="font-semibold text-ink">{formatMoney(amortizarConAbonos(debt.monto_total, debt.tasa_interes, debt.cuotas, [{ mes: 1, monto: parseMoney(abono), tipo: 'cuota' }]).cuota, moneda)}</p>
                 </div>
                 <div>
                   <p className="text-xs text-zinc-500">Nuevo total</p>
-                  <p className="font-semibold text-ink">{formatMoney(resultadoAbono.totalPagar, moneda)}</p>
+                  <p className="font-semibold text-ink">{formatMoney(amortizarConAbonos(debt.monto_total, debt.tasa_interes, debt.cuotas, [{ mes: 1, monto: parseMoney(abono), tipo: 'cuota' }]).totalPagar, moneda)}</p>
                 </div>
                 <div>
                   <p className="text-xs text-zinc-500">Ahorro en interés</p>
-                  <p className="font-semibold text-emerald-600">{formatMoney(resultado.interesTotal - resultadoAbono.interesTotal, moneda)}</p>
+                  <p className="font-semibold text-emerald-600">{formatMoney(calcularAhorroInteres(debt.monto_total, debt.tasa_interes, debt.cuotas, [{ mes: 1, monto: parseMoney(abono), tipo: 'cuota' }]), moneda)}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-zinc-500">Nuevas cuotas</p>
+                  <p className="font-semibold text-ink">{amortizarConAbonos(debt.monto_total, debt.tasa_interes, debt.cuotas, [{ mes: 1, monto: parseMoney(abono), tipo: 'cuota' }]).meses}</p>
                 </div>
               </div>
             </div>
@@ -162,6 +173,16 @@ export function DebtDetailPage() {
 
       <Card className="mt-6">
         <h2 className="mb-4 text-lg font-semibold text-ink">Plan de pagos</h2>
+        {abonos.length > 0 && (
+          <div className="mb-4 rounded-[20px] bg-emerald-50 p-4">
+            <p className="text-sm font-medium text-emerald-800">
+              Ahorro en interés con abonos: {formatMoney(ahorroInteres, moneda)}
+            </p>
+            <p className="mt-1 text-xs text-zinc-500">
+              {abonos.length} abono{abonos.length > 1 ? 's' : ''} aplicado{abonos.length > 1 ? 's' : ''}
+            </p>
+          </div>
+        )}
         <div className="mb-4 grid grid-cols-2 gap-3 text-sm lg:grid-cols-4">
           <div className="rounded-[20px] bg-mist p-3">
             <p className="text-xs text-zinc-500">Cuota mensual</p>
@@ -177,7 +198,7 @@ export function DebtDetailPage() {
           </div>
           <div className="rounded-[20px] bg-mist p-3">
             <p className="text-xs text-zinc-500">Cuotas</p>
-            <p className="font-semibold text-ink">{debt.cuotas}</p>
+            <p className="font-semibold text-ink">{resultado.meses}</p>
           </div>
         </div>
         <div className="max-h-96 overflow-x-auto overflow-y-auto">
@@ -188,33 +209,38 @@ export function DebtDetailPage() {
                 <th className="pb-2 text-right">Cuota</th>
                 <th className="pb-2 text-right">Capital</th>
                 <th className="pb-2 text-right">Interés</th>
+                <th className="pb-2 text-right">Abono</th>
                 <th className="pb-2 text-right">Saldo</th>
                 <th className="pb-2 text-right">Acción</th>
               </tr>
             </thead>
             <tbody>
               {resultado.amortizacion.map((a) => {
-                const pagado = pagados.has(a.mes) || a.mes <= Math.floor((debt.monto_total - debt.saldo_pendiente) / debt.cuota_mensual)
+                const abonoAplicado = abonos.find((ab) => ab.mes === a.mes)
                 return (
-                  <tr key={a.mes} className={`border-b border-zinc-100 ${pagado ? 'bg-emerald-50' : ''}`}>
+                  <tr key={a.mes} className={`border-b border-zinc-100 ${abonoAplicado ? 'bg-emerald-50' : ''}`}>
                     <td className="py-2">{a.mes}: {mesDeuda(debt.fecha_inicio, a.mes)}</td>
                     <td className="py-2 text-right">{formatMoney(a.cuota, moneda)}</td>
-                    <td className="py-2 text-right">{formatMoney(a.capital, moneda)}</td>
+                    <td className="py-2 text-right">{formatMoney(a.capital - a.abono, moneda)}</td>
                     <td className="py-2 text-right">{formatMoney(a.interes, moneda)}</td>
+                    <td className="py-2 text-right">{a.abono > 0 ? formatMoney(a.abono, moneda) : '-'}</td>
                     <td className="py-2 text-right">{formatMoney(a.saldo, moneda)}</td>
                     <td className="py-2 text-right">
-                      {pagado ? (
-                        <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-600">
-                          <Icon className="h-3.5 w-3.5">{icons.check}</Icon>
-                          Pagado
-                        </span>
+                      {abonoAplicado ? (
+                        <button
+                          type="button"
+                          onClick={() => eliminarAbono(a.mes)}
+                          className="rounded-full bg-red-50 px-3 py-1 text-xs font-medium text-red-600 transition active:scale-95"
+                        >
+                          Quitar
+                        </button>
                       ) : (
                         <button
                           type="button"
-                          onClick={() => marcarPagado(a.mes, a.cuota)}
+                          onClick={() => { setAbonoModal(a.mes); setAbonoMonto(''); setAbonoTipo('plazo') }}
                           className="rounded-full bg-ink px-3 py-1 text-xs font-medium text-acid transition active:scale-95"
                         >
-                          Pagar
+                          Abono
                         </button>
                       )}
                     </td>
@@ -225,6 +251,54 @@ export function DebtDetailPage() {
           </table>
         </div>
       </Card>
+
+      {abonoModal !== null && (
+        <Sheet title={`Abono en cuota ${abonoModal}`} onClose={() => setAbonoModal(null)}>
+          <div className="flex flex-col gap-4">
+            <Field label="Monto del abono">
+              <MoneyInput value={abonoMonto} onChange={setAbonoMonto} className={inputCls} required />
+            </Field>
+            <div>
+              <p className="mb-2 text-sm font-medium text-zinc-600">Tipo de abono</p>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setAbonoTipo('plazo')}
+                  aria-pressed={abonoTipo === 'plazo'}
+                  className={`flex flex-col items-center gap-2 rounded-[22px] p-4 text-center transition active:scale-[0.98] ${
+                    abonoTipo === 'plazo' ? 'bg-ink text-white' : 'bg-mist text-ink hover:bg-zinc-200'
+                  }`}
+                >
+                  <Icon className="h-5 w-5">{icons.calendario}</Icon>
+                  <span className="text-sm font-medium">Reducir plazo</span>
+                  <span className="text-xs opacity-70">Menos cuotas</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAbonoTipo('cuota')}
+                  aria-pressed={abonoTipo === 'cuota'}
+                  className={`flex flex-col items-center gap-2 rounded-[22px] p-4 text-center transition active:scale-[0.98] ${
+                    abonoTipo === 'cuota' ? 'bg-ink text-white' : 'bg-mist text-ink hover:bg-zinc-200'
+                  }`}
+                >
+                  <Icon className="h-5 w-5">{icons.salario}</Icon>
+                  <span className="text-sm font-medium">Reducir cuota</span>
+                  <span className="text-xs opacity-70">Menos por mes</span>
+                </button>
+              </div>
+            </div>
+            <p className="rounded-2xl bg-mist px-4 py-3 text-sm text-zinc-600">
+              {abonoTipo === 'plazo'
+                ? 'El abono reduce el principal y se acortan las cuotas restantes.'
+                : 'El abono reduce el principal y se recalcula la cuota mensual.'}
+            </p>
+            <button type="button" onClick={guardarAbono} disabled={savingAbono || !parseMoney(abonoMonto)} className={`${primaryBtn} w-full gap-2`}>
+              <Icon className="h-4 w-4">{icons.check}</Icon>
+              {savingAbono ? 'Guardando…' : 'Aplicar abono'}
+            </button>
+          </div>
+        </Sheet>
+      )}
 
       {editing && (
         <Sheet title="Editar deuda" onClose={() => setEditing(false)}>
