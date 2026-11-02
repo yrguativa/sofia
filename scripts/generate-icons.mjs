@@ -1,14 +1,14 @@
 // Genera los iconos PNG de la PWA sin dependencias externas.
-// Dibuja tres barras sobre fondo slate-900 y las escribe en public/.
+// Dibuja tres barras sobre fondo negro (#121212) y las escribe en public/.
 import { deflateSync } from 'node:zlib'
 import { writeFileSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const outDir = join(dirname(fileURLToPath(import.meta.url)), '..', 'public')
-const BG = [15, 23, 42]
+const BG = [18, 18, 18]
 const FG = [255, 255, 255]
-const ACCENT = [52, 211, 153]
+const ACCENT = [201, 236, 110]
 
 const crcTable = Array.from({ length: 256 }, (_, n) => {
   let c = n
