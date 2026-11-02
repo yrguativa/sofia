@@ -30,6 +30,7 @@ import {
   listIngresosAdicionales,
   listEntries,
   listPlanItems,
+  saveAccount,
   saveIngresoAdicional,
   saveSalario,
   setEntryStatus,
@@ -556,16 +557,36 @@ function PagoForm({
   accounts: Account[]
   onConfirm: (metodo: string | null, cuentaId: string | null) => Promise<string | null>
 }) {
+  const [localAccounts, setLocalAccounts] = useState<Account[]>(accounts)
   const [metodo, setMetodo] = useState<string | null>(entry.metodo_pago)
   const [cuentaId, setCuentaId] = useState<string | null>(entry.cuenta_id)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [nuevoBolsillo, setNuevoBolsillo] = useState('')
+  const [creando, setCreando] = useState(false)
 
-  const cuentasPago = accounts.filter((a) => a.tipo !== 'efectivo')
-  const cuentasBolsillo = accounts.filter((a) => a.tipo === 'efectivo')
+  const cuentasPago = localAccounts.filter((a) => a.tipo !== 'efectivo')
+  const cuentasBolsillo = localAccounts.filter((a) => a.tipo === 'efectivo')
   const cuentasDisponibles = metodo === 'bolsillo' ? cuentasBolsillo : cuentasPago
-  // Si no hay del tipo, permitir todas
-  const lista = cuentasDisponibles.length > 0 ? cuentasDisponibles : accounts
+  const lista = cuentasDisponibles.length > 0 ? cuentasDisponibles : localAccounts
+
+  async function crearBolsillo() {
+    const nombre = nuevoBolsillo.trim() || 'Bolsillo'
+    setCreando(true)
+    setError(null)
+    try {
+      await saveAccount({ nombre, tipo: 'efectivo', saldo_inicial: 0 })
+      const updated = await listAccounts()
+      setLocalAccounts(updated)
+      const creado = updated.find((a) => a.nombre === nombre && a.tipo === 'efectivo')
+      if (creado) setCuentaId(creado.id)
+      setNuevoBolsillo('')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No se pudo crear el bolsillo.')
+    } finally {
+      setCreando(false)
+    }
+  }
 
   // Inicializar cuenta si se selecciona un método de pago y no hay cuenta
   useEffect(() => {
@@ -638,7 +659,7 @@ function PagoForm({
       </div>
 
       {metodo && (
-        <Field label={metodo === 'bolsillo' ? 'Cuenta de efectivo' : 'Cuenta bancaria'}>
+        <Field label={metodo === 'bolsillo' ? 'Bolsillo (cuenta de efectivo)' : 'Cuenta bancaria'}>
           <select
             value={cuentaId ?? ''}
             onChange={(e) => setCuentaId(e.target.value || null)}
@@ -653,6 +674,28 @@ function PagoForm({
             ))}
           </select>
         </Field>
+      )}
+
+      {metodo === 'bolsillo' && (
+        <div className="rounded-[20px] bg-mist p-4">
+          <p className="mb-2 text-xs text-zinc-500">Crear un nuevo bolsillo (cuenta de efectivo)</p>
+          <div className="flex gap-2">
+            <input
+              value={nuevoBolsillo}
+              onChange={(e) => setNuevoBolsillo(e.target.value)}
+              placeholder="Nombre del bolsillo"
+              className={`${inputCls} flex-1`}
+            />
+            <button
+              type="button"
+              onClick={crearBolsillo}
+              disabled={creando}
+              className={secondaryBtn}
+            >
+              {creando ? 'Creando…' : 'Crear'}
+            </button>
+          </div>
+        </div>
       )}
 
       <p className="rounded-2xl bg-mist px-4 py-3 text-sm text-zinc-600">
