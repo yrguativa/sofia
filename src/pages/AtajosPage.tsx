@@ -36,6 +36,18 @@ export function AtajosPage() {
         Genera un token para usar con el Atajo de iOS. El token se muestra una sola vez.
       </p>
 
+      <Card className="mb-6 p-5 text-sm text-ink/80">
+        <p className="font-medium text-zinc-600">Cómo crear el atajo en iOS</p>
+        <ol className="mt-2 list-decimal space-y-1 pl-5">
+          <li>Toca "Nuevo", pon un nombre y elige la cuenta por defecto, luego "Generar token".</li>
+          <li>Copia el token que se muestra (no se volverá a mostrar).</li>
+          <li>Abre la app <strong>Atajos</strong> en iOS y crea un atajo nuevo.</li>
+          <li>Agrega la acción <strong>"Obtener contenido de URL"</strong> y pega el endpoint de la app con el token.</li>
+          <li>Configura el atajo para pedir el monto y la cuenta, y ejecútalo desde el widget o Siri.</li>
+          <li>El token se valida automáticamente; si falla, genera uno nuevo.</li>
+        </ol>
+      </Card>
+
       {data.shortcuts.length === 0 ? (
         <Empty>Aún no tienes tokens. Crea uno para usar el atajo.</Empty>
       ) : (
