@@ -1,6 +1,8 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import { useEffect, useState } from 'react'
 import { AuthProvider } from './auth/AuthContext'
 import { Guard } from './auth/Guard'
+import { SplashScreen } from './components/SplashScreen'
 import { AppShell } from './components/AppShell'
 import { LoginPage } from './pages/LoginPage'
 import { MfaSetupPage } from './pages/MfaSetupPage'
@@ -20,7 +22,27 @@ import { ResetPasswordPage } from './pages/ResetPasswordPage'
 import { PlanPage } from './pages/PlanPage'
 
 export default function App() {
+  const [showSplash, setShowSplash] = useState(true)
+
+  useEffect(() => {
+    const timer = setTimeout(() => setShowSplash(false), 1500)
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        setShowSplash(true)
+        const t = setTimeout(() => setShowSplash(false), 1500)
+        return () => clearTimeout(t)
+      }
+    }
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => {
+      clearTimeout(timer)
+      document.removeEventListener('visibilitychange', onVisibility)
+    }
+  }, [])
+
   return (
+    <>
+      {showSplash && <SplashScreen />}
     <AuthProvider>
       <BrowserRouter basename={import.meta.env.BASE_URL}>
         <Routes>
@@ -45,5 +67,6 @@ export default function App() {
         </Routes>
       </BrowserRouter>
     </AuthProvider>
+    </>
   )
 }
