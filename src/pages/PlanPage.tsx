@@ -13,7 +13,7 @@ import {
   primaryBtn,
 } from '../components/ui'
 import { parseMoney } from '../lib/money'
-import { deletePlanItem, listCategories, listDebts, listPlanItems, savePlanItem, updatePlanItemOrden } from '../lib/db'
+import { deletePlanItem, listCategories, listDebts, listGoals, listPlanItems, savePlanItem, updatePlanItemOrden } from '../lib/db'
 import { Icon } from '../components/icons'
 import { grupoIcon } from '../components/iconPaths'
 import { useLoad } from '../lib/useLoad'
@@ -23,8 +23,8 @@ export function PlanPage() {
   const [editing, setEditing] = useState<PlanItem | 'new' | null>(null)
 
   const loader = useCallback(async () => {
-    const [items, categories, debts] = await Promise.all([listPlanItems(), listCategories(), listDebts()])
-    return { items, categories, debts }
+    const [items, categories, debts, goals] = await Promise.all([listPlanItems(), listCategories(), listDebts(), listGoals()])
+    return { items, categories, debts, goals }
   }, [])
 
   const { data, error, reload } = useLoad(loader)
@@ -128,6 +128,7 @@ export function PlanPage() {
             item={editing === 'new' ? null : editing}
             categories={data.categories.filter((c) => c.tipo === 'gasto')}
             debts={data.debts}
+            goals={data.goals}
             onSaved={close}
           />
         </Sheet>
@@ -140,11 +141,13 @@ function PlanItemForm({
   item,
   categories,
   debts,
+  goals,
   onSaved,
 }: {
   item: PlanItem | null
   categories: { id: string; nombre: string; icono: string | null }[]
   debts: { id: string; nombre: string }[]
+  goals: { id: string; nombre: string }[]
   onSaved: () => void
 }) {
   const [nombre, setNombre] = useState(item?.nombre ?? '')
@@ -154,6 +157,7 @@ function PlanItemForm({
   const [valor, setValor] = useState(item ? String(item.valor) : '')
   const [activo, setActivo] = useState(item?.activo ?? true)
   const [debtId, setDebtId] = useState(item?.debt_id ?? '')
+  const [goalId, setGoalId] = useState(item?.goal_id ?? '')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -176,6 +180,7 @@ function PlanItemForm({
           activo,
           orden: item?.orden ?? 0,
           debt_id: debtId || null,
+           goal_id: goalId || null,
         },
         item?.id,
       )
@@ -233,6 +238,17 @@ function PlanItemForm({
           {debts.map((d) => (
             <option key={d.id} value={d.id}>
               {d.nombre}
+            </option>
+          ))}
+        </select>
+      </Field>
+
+      <Field label="Vincular a meta (opcional)" hint="Al pagar este item, se agregará un aporte a la meta vinculada.">
+        <select value={goalId} onChange={(e) => setGoalId(e.target.value)} className={inputCls}>
+          <option value="">Sin meta vinculada</option>
+          {goals.map((g) => (
+            <option key={g.id} value={g.id}>
+              {g.nombre}
             </option>
           ))}
         </select>

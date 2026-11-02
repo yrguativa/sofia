@@ -17,6 +17,7 @@ function entry(partial: Partial<BudgetEntry>): BudgetEntry {
     cuenta_id: null,
     metodo_pago: null,
     debt_id: null,
+    goal_id: null,
     ...partial,
   }
 }
