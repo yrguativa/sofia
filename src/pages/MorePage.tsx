@@ -30,7 +30,6 @@ export function MorePage() {
             <MenuLink to="/categorias" label="Categorías" icon={icons.categorias} />
             <MenuLink to="/plantilla" label="Plantilla de presupuesto" icon={icons.plantilla} />
             <MenuLink to="/simulador" label="Simulador" icon={icons.simulador} />
-        <MenuLink to="/deudas" label="Deudas" icon={icons.tarjeta} />
           </Card>
 
           <section className="rounded-[28px] bg-ink p-6 text-white">
