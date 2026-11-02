@@ -132,6 +132,10 @@ export async function deletePlanItem(id: string) {
   check(await supabase.from('plan_items').delete().eq('id', id))
 }
 
+export async function updatePlanItemOrden(id: string, orden: number) {
+  check(await supabase.from('plan_items').update({ orden }).eq('id', id))
+}
+
 export async function getSalario(mes: string): Promise<number | null> {
   const rows = unwrap<Array<{ monto: string | number }>>(
     await supabase

@@ -25,10 +25,13 @@ import {
   getProfile,
   getSalario,
   listAccounts,
+  listCategories,
   listEntries,
+  listPlanItems,
   saveSalario,
   setEntryStatus,
   updateEntry,
+  updatePlanItemOrden,
 } from '../lib/db'
 import { montoDesde, resumenPresupuesto } from '../lib/presupuesto'
 import { parseMoney } from '../lib/money'
@@ -51,19 +54,23 @@ export function BudgetsPage() {
 
 function BudgetsContent({ mesInicial }: { mesInicial: string }) {
   const [mes, setMes] = useState(mesInicial)
+  const [agruparPor, setAgruparPor] = useState<'grupo' | 'categoria'>('grupo')
+  const [colapsadas, setColapsadas] = useState<Set<string>>(new Set())
   const [editing, setEditing] = useState<BudgetEntry | null>(null)
   const [pagando, setPagando] = useState<BudgetEntry | null>(null)
   const [aviso, setAviso] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
 
   const loader = useCallback(async () => {
-    const [profile, accounts, salario, entries] = await Promise.all([
+    const [profile, accounts, salario, entries, planItems, categories] = await Promise.all([
       getProfile(),
       listAccounts(),
       getSalario(mes),
       listEntries(mes),
+      listPlanItems(),
+      listCategories(),
     ])
-    return { profile, accounts, salario, entries }
+    return { profile, accounts, salario, entries, planItems, categories }
   }, [mes])
 
   const { data, error, reload } = useLoad(loader)
@@ -77,6 +84,23 @@ function BudgetsContent({ mesInicial }: { mesInicial: string }) {
     } catch (err) {
       setActionError(err instanceof Error ? err.message : 'No se pudo completar la acción.')
     }
+  }
+
+  async function moverEntry(entry: BudgetEntry, dir: -1 | 1) {
+    if (!data) return
+    const ordenDe = (e: BudgetEntry) => data.planItems.find((p) => p.id === e.plan_item_id)?.orden ?? 0
+    const group = data.entries
+      .filter((e) => e.grupo === entry.grupo)
+      .sort((a, b) => ordenDe(a) - ordenDe(b) || a.nombre.localeCompare(b.nombre))
+    const idx = group.findIndex((e) => e.id === entry.id)
+    const newIdx = idx + dir
+    if (newIdx < 0 || newIdx >= group.length) return
+    const reordered = [...group]
+    ;[reordered[idx], reordered[newIdx]] = [reordered[newIdx], reordered[idx]]
+    await Promise.all(
+      reordered.map((e, i) => (e.plan_item_id ? updatePlanItemOrden(e.plan_item_id, i) : Promise.resolve())),
+    )
+    reload()
   }
 
   async function generar() {
@@ -184,14 +208,33 @@ function BudgetsContent({ mesInicial }: { mesInicial: string }) {
           </div>
         </Card>
       )}
+      <div className="mb-4 flex gap-2">
+        <button
+          type="button"
+          onClick={() => setAgruparPor('grupo')}
+          className={`rounded-full px-4 py-2 text-sm font-medium transition ${agruparPor === 'grupo' ? 'bg-ink text-white' : 'bg-mist text-ink'}`}
+        >
+          Por grupo
+        </button>
+        <button
+          type="button"
+          onClick={() => setAgruparPor('categoria')}
+          className={`rounded-full px-4 py-2 text-sm font-medium transition ${agruparPor === 'categoria' ? 'bg-ink text-white' : 'bg-mist text-ink'}`}
+        >
+          Por categoría
+        </button>
+      </div>
 
       {data.entries.length === 0 ? (
         <Empty>
           Este mes aún no tiene ítems. Crea tu plantilla y pulsa <strong>Generar desde plantilla</strong>.
         </Empty>
-      ) : (
+      ) : agruparPor === 'grupo' ? (
         grupos.map((g) => {
-          const items = data.entries.filter((e) => e.grupo === g)
+          const ordenDe = (e: BudgetEntry) => data.planItems.find((p) => p.id === e.plan_item_id)?.orden ?? 0
+          const items = data.entries
+            .filter((e) => e.grupo === g)
+            .sort((a, b) => ordenDe(a) - ordenDe(b) || a.nombre.localeCompare(b.nombre))
           if (items.length === 0) return null
           return (
             <section key={g} className="mb-6">
@@ -200,16 +243,79 @@ function BudgetsContent({ mesInicial }: { mesInicial: string }) {
                 {g}
               </h2>
               <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-                {items.map((e) => (
+                {items.map((e, idx) => (
                   <EntryRow
                     key={e.id}
                     entry={e}
                     moneda={moneda}
+                    index={idx}
+                    total={items.length}
+                    onMoveUp={() => moverEntry(e, -1)}
+                    onMoveDown={() => moverEntry(e, 1)}
                     onPagar={() => setPagando(e)}
                     onEdit={() => setEditing(e)}
                   />
                 ))}
               </div>
+            </section>
+          )
+        })
+      ) : (
+        [...data.categories.filter((c) => c.tipo === 'gasto'), null].map((cat) => {
+          const catId = cat?.id ?? null
+          const key = catId ?? 'sin-categoria'
+          const ordenDe = (e: BudgetEntry) => data.planItems.find((p) => p.id === e.plan_item_id)?.orden ?? 0
+          const items = data.entries
+            .filter((e) => e.categoria_id === catId)
+            .sort((a, b) => ordenDe(a) - ordenDe(b) || a.nombre.localeCompare(b.nombre))
+          if (items.length === 0) return null
+          const planificado = items.reduce((s, e) => s + e.monto, 0)
+          const pagado = items.reduce((s, e) => s + (e.metodo_pago ? e.monto : 0), 0)
+          const pct = planificado > 0 ? Math.round((pagado / planificado) * 100) : 0
+          const collapsed = colapsadas.has(key)
+          return (
+            <section key={key} className="mb-4">
+              <button
+                type="button"
+                onClick={() => {
+                  setColapsadas((prev) => {
+                    const next = new Set(prev)
+                    if (next.has(key)) next.delete(key)
+                    else next.add(key)
+                    return next
+                  })
+                }}
+                className="flex w-full items-center justify-between rounded-2xl bg-white p-4 text-left shadow-sm"
+              >
+                <span className="flex items-center gap-2 font-medium text-ink">
+                  <span>{collapsed ? '▸' : '▾'}</span>
+                  {cat?.icono ? `${cat.icono} ` : ''}
+                  {cat?.nombre ?? 'Sin categoría'}
+                </span>
+                <span className="text-xs text-zinc-500">
+                  {formatMoney(pagado, moneda)} / {formatMoney(planificado, moneda)}
+                </span>
+              </button>
+              <div className="mt-2 px-1">
+                <ProgressBar value={pct} tone={pct >= 100 ? 'acid' : 'ink'} />
+              </div>
+              {!collapsed && (
+                <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                  {items.map((e, idx) => (
+                    <EntryRow
+                      key={e.id}
+                      entry={e}
+                      moneda={moneda}
+                      index={idx}
+                      total={items.length}
+                      onMoveUp={() => moverEntry(e, -1)}
+                      onMoveDown={() => moverEntry(e, 1)}
+                      onPagar={() => setPagando(e)}
+                      onEdit={() => setEditing(e)}
+                    />
+                  ))}
+                </div>
+              )}
             </section>
           )
         })
@@ -302,11 +408,19 @@ function SalarioCard({ salario, onSave }: { salario: number; onSave: (valor: num
 function EntryRow({
   entry,
   moneda,
+  index,
+  total,
+  onMoveUp,
+  onMoveDown,
   onPagar,
   onEdit,
 }: {
   entry: BudgetEntry
   moneda: string
+  index?: number
+  total?: number
+  onMoveUp?: () => void
+  onMoveDown?: () => void
   onPagar: () => void
   onEdit: () => void
 }) {
@@ -324,7 +438,31 @@ function EntryRow({
         >
           {entry.nombre}
         </button>
-        <p className="whitespace-nowrap text-sm font-semibold text-ink">{formatMoney(entry.monto, moneda)}</p>
+        <div className="flex items-center gap-2">
+          {onMoveUp && (
+            <button
+              type="button"
+              onClick={onMoveUp}
+              disabled={index === 0}
+              aria-label="Subir"
+              className="flex h-7 w-7 items-center justify-center rounded-full text-zinc-400 disabled:opacity-30"
+            >
+              ▲
+            </button>
+          )}
+          {onMoveDown && (
+            <button
+              type="button"
+              onClick={onMoveDown}
+              disabled={total !== undefined && index === (total ?? 0) - 1}
+              aria-label="Bajar"
+              className="flex h-7 w-7 items-center justify-center rounded-full text-zinc-400 disabled:opacity-30"
+            >
+              ▼
+            </button>
+          )}
+          <p className="whitespace-nowrap text-sm font-semibold text-ink">{formatMoney(entry.monto, moneda)}</p>
+        </div>
       </div>
       <div className="flex items-center justify-between gap-2">
         <span className="inline-flex min-w-0 items-center gap-1.5 text-xs font-medium text-zinc-600">

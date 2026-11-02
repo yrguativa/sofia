@@ -13,7 +13,7 @@ import {
   primaryBtn,
 } from '../components/ui'
 import { parseMoney } from '../lib/money'
-import { deletePlanItem, listCategories, listDebts, listPlanItems, savePlanItem } from '../lib/db'
+import { deletePlanItem, listCategories, listDebts, listPlanItems, savePlanItem, updatePlanItemOrden } from '../lib/db'
 import { Icon } from '../components/icons'
 import { grupoIcon } from '../components/iconPaths'
 import { useLoad } from '../lib/useLoad'
@@ -31,6 +31,18 @@ export function PlanPage() {
 
   function close() {
     setEditing(null)
+    reload()
+  }
+
+  async function mover(item: PlanItem, dir: -1 | 1) {
+    if (!data) return
+    const group = data.items.filter((i) => i.grupo === item.grupo).sort((a, b) => a.orden - b.orden || a.nombre.localeCompare(b.nombre))
+    const idx = group.findIndex((i) => i.id === item.id)
+    const newIdx = idx + dir
+    if (newIdx < 0 || newIdx >= group.length) return
+    const reordered = [...group]
+    ;[reordered[idx], reordered[newIdx]] = [reordered[newIdx], reordered[idx]]
+    await Promise.all(reordered.map((it, i) => updatePlanItemOrden(it.id, i)))
     reload()
   }
 
@@ -57,31 +69,52 @@ export function PlanPage() {
         <Empty>Agrega tus gastos fijos, deudas, ahorros y diezmos.</Empty>
       ) : (
         grupos.map((g) => {
-          const items = data.items.filter((i) => i.grupo === g)
+          const items = data.items.filter((i) => i.grupo === g).sort((a, b) => a.orden - b.orden || a.nombre.localeCompare(b.nombre))
           if (items.length === 0) return null
           return (
             <section key={g} className="mb-6">
               <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{g}</h2>
               <Card className="flex flex-col divide-y divide-slate-100 p-0">
-                {items.map((i) => (
-                  <button
-                    key={i.id}
-                    type="button"
-                    onClick={() => setEditing(i)}
-                    className="flex items-center justify-between px-5 py-3 text-left"
-                  >
-                    <span className="flex min-w-0 items-center gap-2">
-                      <Icon className="h-4 w-4 shrink-0 text-zinc-400">{grupoIcon[i.grupo]}</Icon>
-                      <span className={`truncate font-medium ${i.activo ? 'text-slate-900' : 'text-slate-400 line-through'}`}>
-                        {i.nombre}
+                {items.map((i, idx) => (
+                  <div key={i.id} className="flex items-center gap-2 px-3 py-2">
+                    <div className="flex flex-col">
+                      <button
+                        type="button"
+                        onClick={() => mover(i, -1)}
+                        disabled={idx === 0}
+                        aria-label="Subir"
+                        className="flex h-7 w-7 items-center justify-center rounded-full text-zinc-400 disabled:opacity-30"
+                      >
+                        ▲
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => mover(i, 1)}
+                        disabled={idx === items.length - 1}
+                        aria-label="Bajar"
+                        className="flex h-7 w-7 items-center justify-center rounded-full text-zinc-400 disabled:opacity-30"
+                      >
+                        ▼
+                      </button>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setEditing(i)}
+                      className="flex flex-1 items-center justify-between px-2 py-1 text-left"
+                    >
+                      <span className="flex min-w-0 items-center gap-2">
+                        <Icon className="h-4 w-4 shrink-0 text-zinc-400">{grupoIcon[i.grupo]}</Icon>
+                        <span className={`truncate font-medium ${i.activo ? 'text-slate-900' : 'text-slate-400 line-through'}`}>
+                          {i.nombre}
+                        </span>
+                        <span className="text-xs text-slate-500">
+                          {i.tipo_monto === 'porcentaje' ? `${i.valor}% del salario` : 'Valor fijo'}
+                          {i.activo ? '' : ' · inactivo'}
+                        </span>
                       </span>
-                      <span className="text-xs text-slate-500">
-                        {i.tipo_monto === 'porcentaje' ? `${i.valor}% del salario` : 'Valor fijo'}
-                        {i.activo ? '' : ' · inactivo'}
-                      </span>
-                    </span>
-                    <span className="ml-3 text-slate-400">›</span>
-                  </button>
+                      <span className="ml-3 text-slate-400">›</span>
+                    </button>
+                  </div>
                 ))}
               </Card>
             </section>
