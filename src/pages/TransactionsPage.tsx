@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react'
 import { Sheet } from '../components/Sheet'
 import { TransactionForm } from '../components/TransactionForm'
 import { TransactionRow } from '../components/TransactionRow'
+import { colorPorCuenta } from '../components/estadoPago'
 import { Empty, ErrorText, Loading, MonthSwitcher, PageHeader, primaryBtn } from '../components/ui'
 import { listAccounts, listCategories, getProfile, listEntries, listTransactions } from '../lib/db'
 import { currentMonth, dayLabel, mesDePresupuesto, monthLabel, monthRange, shiftMonth } from '../lib/format'
@@ -15,11 +16,6 @@ export function TransactionsPage() {
   if (!perfil.data) return <Loading />
 
   return <TransactionsContent mesInicial={mesDePresupuesto(new Date(), perfil.data.dia_pago)} />
-}
-
-function colorPresupuesto(cuenta: string | undefined) {
-  if (cuenta === undefined) return undefined
-  return cuenta === 'Bolsillo' ? 'amarillo' : 'verde'
 }
 
 function TransactionsContent({ mesInicial }: { mesInicial: string }) {
@@ -99,7 +95,7 @@ function TransactionsContent({ mesInicial }: { mesInicial: string }) {
                   accounts={data.accounts}
                   categories={data.categories}
                   moneda={data.profile.moneda}
-                  presupuesto={colorPresupuesto(data.pagadosPresupuesto.get(t.id))}
+                  presupuesto={colorPorCuenta(data.pagadosPresupuesto.get(t.id))}
                   onClick={() => setEditing(t)}
                 />
               ))}
