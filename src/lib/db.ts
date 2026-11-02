@@ -193,8 +193,8 @@ export async function generarMes(mes: string): Promise<number> {
   return Number(data)
 }
 
-export async function setEntryStatus(id: string, cuentaId: string | null) {
-  check(await supabase.rpc('set_budget_entry_status', { p_entry: id, p_cuenta: cuentaId }))
+export async function setEntryStatus(id: string, metodo: string | null, cuentaId: string | null) {
+  check(await supabase.rpc('set_budget_entry_status', { p_entry: id, p_metodo: metodo, p_cuenta: cuentaId }))
 }
 
 export async function updateEntry(

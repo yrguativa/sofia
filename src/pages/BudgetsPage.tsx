@@ -327,10 +327,10 @@ function BudgetsContent({ mesInicial }: { mesInicial: string }) {
             entry={pagando}
             moneda={moneda}
             accounts={data.accounts}
-            onConfirm={async (cuentaId) => {
+            onConfirm={async (metodo, cuentaId) => {
               const id = pagando.id
               try {
-                await setEntryStatus(id, cuentaId)
+                await setEntryStatus(id, metodo, cuentaId)
                 setPagando(null)
                 reload()
                 return null
@@ -501,7 +501,7 @@ function PagoForm({
   entry: BudgetEntry
   moneda: string
   accounts: Account[]
-  onConfirm: (cuentaId: string | null) => Promise<string | null>
+  onConfirm: (metodo: string | null, cuentaId: string | null) => Promise<string | null>
 }) {
   const [metodo, setMetodo] = useState<string | null>(entry.metodo_pago)
   const [cuentaId, setCuentaId] = useState<string | null>(entry.cuenta_id)
@@ -528,7 +528,7 @@ function PagoForm({
   async function confirmar() {
     setSaving(true)
     setError(null)
-    const msg = await onConfirm(metodo ? cuentaId : null)
+    const msg = await onConfirm(metodo, metodo ? cuentaId : null)
     if (msg) {
       setError(msg)
       setSaving(false)
