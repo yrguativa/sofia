@@ -16,8 +16,8 @@ export default defineConfig(({ command }) => ({
         short_name: 'Finanzas',
         description: 'Finanzas personales',
         lang: 'es',
-        theme_color: '#0f172a',
-        background_color: '#f8fafc',
+        theme_color: '#121212',
+        background_color: '#f3f6ee',
         display: 'standalone',
         icons: [
           { src: 'pwa-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },

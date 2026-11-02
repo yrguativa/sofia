@@ -1,1 +1,14 @@
 @import "tailwindcss";
+
+@theme {
+  --font-sans: "Outfit", ui-sans-serif, system-ui, sans-serif;
+  --color-acid: #c9ec6e;
+  --color-ink: #121212;
+  --color-mist: #f3f6ee;
+}
+
+body {
+  background-color: var(--color-mist);
+  color: var(--color-ink);
+  -webkit-font-smoothing: antialiased;
+}
