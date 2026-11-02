@@ -1,7 +1,5 @@
 import { useState, useMemo } from 'react'
-import { Card, Empty, ErrorText, Field, PageHeader, inputCls, primaryBtn, secondaryBtn } from '../components/ui'
-import { Icon } from '../components/icons'
-import { icons } from '../components/iconPaths'
+import { Card, Empty, Field, PageHeader, inputCls, primaryBtn } from '../components/ui'
 import { MoneyInput } from '../components/MoneyInput'
 import { parseMoney } from '../lib/money'
 import { simularPrestamo } from '../lib/simulator'
@@ -158,5 +156,3 @@ export function SimulatorPage() {
     </>
   )
 }
-EOF
-npm run build 2>&1 | grep -E " error|TS[0-9]+|built" | head
