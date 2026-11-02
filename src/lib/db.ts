@@ -133,19 +133,20 @@ export async function deletePlanItem(id: string) {
 }
 
 export async function getSalario(mes: string): Promise<number | null> {
-  const rows = unwrap<Array<{ salario: string | number }>>(
-    await supabase.from('budget_months').select('salario').eq('mes', `${mes}-01`),
+  const rows = unwrap<Array<{ monto: string | number }>>(
+    await supabase
+      .from('salario_historial')
+      .select('monto')
+      .lte('desde', `${mes}-01`)
+      .order('desde', { ascending: false })
+      .order('creado_en', { ascending: false })
+      .limit(1),
   )
-  return rows.length > 0 ? Number(rows[0].salario) : null
+  return rows.length > 0 ? Number(rows[0].monto) : null
 }
 
 export async function saveSalario(mes: string, salario: number) {
-  const user_id = await currentUserId()
-  check(
-    await supabase
-      .from('budget_months')
-      .upsert({ user_id, mes: `${mes}-01`, salario }, { onConflict: 'user_id,mes' }),
-  )
+  await saveSalarioHistorial(mes, salario)
 }
 
 type EntryRow = Omit<BudgetEntry, 'monto' | 'valor' | 'cuenta_id'> & {
@@ -215,11 +216,10 @@ export async function listSalarioHistorial() {
 
 export async function saveSalarioHistorial(desde: string, monto: number) {
   const user_id = await currentUserId()
-  check(
-    await supabase
-      .from('salario_historial')
-      .upsert({ user_id, desde: `${desde}-01`, monto }, { onConflict: 'user_id,desde' }),
-  )
+  const desdeDate = `${desde}-01`
+  // Evita duplicados del mismo mes sin depender de un constraint único en la BD.
+  check(await supabase.from('salario_historial').delete().eq('user_id', user_id).eq('desde', desdeDate))
+  check(await supabase.from('salario_historial').insert({ user_id, desde: desdeDate, monto }))
 }
 
 export async function deleteSalarioHistorial(id: string) {
