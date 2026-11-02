@@ -82,6 +82,10 @@ function BudgetsContent({ mesInicial }: { mesInicial: string }) {
   async function generar() {
     setActionError(null)
     setAviso(null)
+    if (data?.salario == null) {
+      setActionError(`Configura el salario para ${mes} primero (tarjeta de arriba o Más → Salario).`)
+      return
+    }
     try {
       const creados = await generarMes(mes)
       setAviso(
