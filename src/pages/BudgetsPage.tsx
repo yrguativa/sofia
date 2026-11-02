@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react'
-import { Card, Empty, ErrorText, Loading, PageHeader, ProgressBar, inputCls, secondaryBtn } from '../components/ui'
+import { Card, Empty, ErrorText, Loading, MonthSwitcher, PageHeader, ProgressBar, inputCls } from '../components/ui'
 import { deleteBudget, getProfile, listBudgets, listCategories, listTransactions, upsertBudget } from '../lib/db'
 import { spentByCategory } from '../lib/finance'
 import { currentMonth, formatMoney, monthLabel, monthRange, shiftMonth } from '../lib/format'
@@ -35,35 +35,23 @@ export function BudgetsPage() {
     <>
       <PageHeader title="Presupuestos" />
 
-      <div className="mb-6 flex items-center justify-between rounded-xl bg-white px-2 py-2 shadow-sm">
-        <button type="button" onClick={() => setMes(shiftMonth(mes, -1))} className={`${secondaryBtn} px-3`}>
-          ‹
-        </button>
-        <span className="font-semibold text-slate-900">{monthLabel(mes)}</span>
-        <button
-          type="button"
-          onClick={() => setMes(shiftMonth(mes, 1))}
-          disabled={mes >= currentMonth()}
-          className={`${secondaryBtn} px-3`}
-        >
-          ›
-        </button>
-      </div>
+      <MonthSwitcher
+        label={monthLabel(mes)}
+        onPrev={() => setMes(shiftMonth(mes, -1))}
+        onNext={() => setMes(shiftMonth(mes, 1))}
+        canNext={mes < currentMonth()}
+      />
 
-      <Card className="mb-6">
-        <p className="text-sm text-slate-500">Gastado de los límites definidos</p>
-        <p className="mt-1 text-xl font-bold text-slate-900">
-          {formatMoney(totalGastado, data.profile.moneda)}{' '}
-          <span className="text-sm font-normal text-slate-500">
-            / {formatMoney(totalLimite, data.profile.moneda)}
-          </span>
-        </p>
-      </Card>
+      <section className="mb-6 rounded-[28px] bg-ink p-6 text-white">
+        <p className="text-sm text-zinc-400">Gastado de los límites definidos</p>
+        <p className="mt-1 text-3xl font-bold tracking-tight text-acid">{formatMoney(totalGastado, data.profile.moneda)}</p>
+        <p className="mt-1 text-sm text-zinc-400">de {formatMoney(totalLimite, data.profile.moneda)}</p>
+      </section>
 
       {gastoCats.length === 0 ? (
         <Empty>No hay categorías de gasto.</Empty>
       ) : (
-        <div className="flex flex-col gap-3">
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {gastoCats.map((c) => (
             <BudgetRow
               key={`${c.id}-${budgetByCat.get(c.id)?.limite ?? ''}-${mes}`}
@@ -122,9 +110,9 @@ function BudgetRow({
   }
 
   return (
-    <Card className="p-4">
-      <div className="mb-2 flex items-center justify-between gap-3">
-        <p className="font-medium text-slate-900">
+    <Card className="p-5">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <p className="font-medium text-ink">
           {category.icono ? `${category.icono} ` : ''}
           {category.nombre}
         </p>
@@ -143,15 +131,15 @@ function BudgetRow({
       </div>
       {limite > 0 && (
         <>
-          <ProgressBar value={porcentaje} tone={excedido ? 'red' : 'slate'} />
-          <p className={`mt-2 text-xs ${excedido ? 'text-red-600' : 'text-slate-500'}`}>
+          <ProgressBar value={porcentaje} tone={excedido ? 'red' : 'ink'} />
+          <p className={`mt-2 text-xs ${excedido ? 'text-red-600' : 'text-zinc-500'}`}>
             {formatMoney(spent, moneda)} de {formatMoney(limite, moneda)}
             {excedido ? ' · límite superado' : ''}
           </p>
         </>
       )}
       {limite === 0 && spent > 0 && (
-        <p className="text-xs text-slate-500">Gastado: {formatMoney(spent, moneda)}</p>
+        <p className="text-xs text-zinc-500">Gastado: {formatMoney(spent, moneda)}</p>
       )}
       {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
     </Card>

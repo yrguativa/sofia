@@ -45,31 +45,31 @@ export function GoalsPage() {
       {data.goals.length === 0 ? (
         <Empty>Define una meta de ahorro, por ejemplo un viaje o un fondo de emergencia.</Empty>
       ) : (
-        <div className="flex flex-col gap-3">
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {data.goals.map((g) => {
             const pct = g.objetivo > 0 ? (g.ahorrado / g.objetivo) * 100 : 0
             const completa = g.ahorrado >= g.objetivo
             return (
-              <Card key={g.id} className="p-4">
-                <div className="mb-2 flex items-start justify-between gap-3">
+              <Card key={g.id} className="p-5">
+                <div className="mb-3 flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="truncate font-medium text-slate-900">{g.nombre}</p>
-                    {g.fecha_meta && <p className="text-xs text-slate-500">Meta: {g.fecha_meta}</p>}
+                    <p className="truncate font-semibold text-ink">{g.nombre}</p>
+                    {g.fecha_meta && <p className="text-xs text-zinc-500">Meta: {g.fecha_meta}</p>}
                   </div>
-                  <p className="text-right text-sm font-semibold text-slate-900">
+                  <span className="shrink-0 rounded-full bg-acid px-3 py-1 text-xs font-semibold text-ink">
                     {Math.min(100, Math.round(pct))}%
-                  </p>
+                  </span>
                 </div>
-                <ProgressBar value={pct} tone={completa ? 'emerald' : 'slate'} />
-                <p className="mt-2 text-xs text-slate-500">
+                <ProgressBar value={pct} tone={completa ? 'acid' : 'ink'} />
+                <p className="mt-2 text-xs text-zinc-500">
                   {formatMoney(g.ahorrado, moneda)} de {formatMoney(g.objetivo, moneda)}
                   {completa ? ' · ¡Meta alcanzada!' : ''}
                 </p>
-                <div className="mt-3 flex gap-2">
-                  <button type="button" onClick={() => setSheet({ kind: 'aportar', goal: g })} className={`${secondaryBtn} flex-1 py-2 text-sm`}>
+                <div className="mt-4 flex gap-2">
+                  <button type="button" onClick={() => setSheet({ kind: 'aportar', goal: g })} className={`${secondaryBtn} flex-1 py-2.5 text-sm`}>
                     Aportar / retirar
                   </button>
-                  <button type="button" onClick={() => setSheet({ kind: 'form', goal: g })} className={`${secondaryBtn} py-2 text-sm`}>
+                  <button type="button" onClick={() => setSheet({ kind: 'form', goal: g })} className={`${secondaryBtn} py-2.5 text-sm`}>
                     Editar
                   </button>
                 </div>
@@ -186,8 +186,8 @@ function AportarForm({ goal, moneda, onSaved }: { goal: Goal; moneda: string; on
 
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-sm text-slate-600">
-        Ahorrado: <span className="font-semibold text-slate-900">{formatMoney(goal.ahorrado, moneda)}</span>
+      <p className="text-sm text-zinc-600">
+        Ahorrado: <span className="font-semibold text-ink">{formatMoney(goal.ahorrado, moneda)}</span>
       </p>
       <Field label="Monto">
         <input inputMode="decimal" value={monto} onChange={(e) => setMonto(e.target.value)} className={`${inputCls} text-2xl font-semibold`} />
