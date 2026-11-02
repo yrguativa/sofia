@@ -19,18 +19,18 @@ export function TransactionRow({ tx, accounts, categories, moneda, onClick }: Pr
   const icon = isTransfer ? '🔁' : (cat?.icono ?? '•')
   const signo = tx.tipo === 'ingreso' ? '+' : tx.tipo === 'gasto' ? '−' : ''
   const color =
-    tx.tipo === 'ingreso' ? 'text-emerald-600' : tx.tipo === 'gasto' ? 'text-red-600' : 'text-slate-700'
+    tx.tipo === 'ingreso' ? 'text-emerald-600' : tx.tipo === 'gasto' ? 'text-red-600' : 'text-zinc-700'
 
   return (
     <button
       type="button"
       onClick={onClick}
-      className="flex w-full items-center gap-3 rounded-xl bg-white px-4 py-3 text-left shadow-sm"
+      className="flex w-full items-center gap-3 rounded-[22px] bg-white p-3 pr-4 text-left shadow-sm transition active:scale-[0.99]"
     >
-      <span className="text-xl">{icon}</span>
+      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-mist text-xl">{icon}</span>
       <span className="min-w-0 flex-1">
-        <span className="block truncate font-medium text-slate-900">{title}</span>
-        <span className="block truncate text-xs text-slate-500">
+        <span className="block truncate font-medium text-ink">{title}</span>
+        <span className="block truncate text-xs text-zinc-500">
           {origen?.nombre}
           {tx.nota ? ` · ${tx.nota}` : ''}
         </span>

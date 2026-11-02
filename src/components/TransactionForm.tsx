@@ -78,7 +78,7 @@ export function TransactionForm({ accounts, categories, initial, onSaved }: Prop
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-      <div className="grid grid-cols-3 gap-1 rounded-xl bg-slate-100 p-1">
+      <div className="grid grid-cols-3 gap-1 rounded-full bg-mist p-1.5">
         {tipos.map((t) => (
           <button
             key={t.value}
@@ -87,7 +87,7 @@ export function TransactionForm({ accounts, categories, initial, onSaved }: Prop
               setTipo(t.value)
               setCategoryId('')
             }}
-            className={`rounded-lg py-2 text-sm font-medium ${tipo === t.value ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}
+            className={`rounded-full py-2.5 text-sm font-medium transition ${tipo === t.value ? 'bg-ink text-acid' : 'text-zinc-500'}`}
           >
             {t.label}
           </button>
