@@ -10,6 +10,7 @@ type Props = {
   categories: Category[]
   moneda: string
   presupuesto?: ColorPago
+  esBolsillo?: boolean
   onClick?: () => void
 }
 
@@ -19,7 +20,7 @@ const estilos = {
   transferencia: 'bg-mist text-zinc-600',
 } as const
 
-export function TransactionRow({ tx, accounts, categories, moneda, presupuesto, onClick }: Props) {
+export function TransactionRow({ tx, accounts, categories, moneda, presupuesto, esBolsillo: esBolsilloProp, onClick }: Props) {
   const cat = categories.find((c) => c.id === tx.category_id)
   const origen = accounts.find((a) => a.id === tx.account_id)
   const destino = accounts.find((a) => a.id === tx.cuenta_destino_id)
@@ -27,7 +28,7 @@ export function TransactionRow({ tx, accounts, categories, moneda, presupuesto, 
   const isTransfer = tx.tipo === 'transferencia'
   const title = isTransfer ? `Transferencia a ${destino?.nombre ?? '—'}` : (cat?.nombre ?? 'Sin categoría')
   const signo = tx.tipo === 'ingreso' ? '+' : tx.tipo === 'gasto' ? '−' : ''
-  const esBolsillo = !!tx.bolsillo_id
+  const esBolsillo = !!tx.bolsillo_id || !!esBolsilloProp
   const color =
     esBolsillo ? 'text-orange-600' : tx.tipo === 'ingreso' ? 'text-emerald-600' : tx.tipo === 'gasto' ? 'text-red-600' : 'text-zinc-700'
   const estiloIcono = esBolsillo ? 'bg-orange-50 text-orange-600' : estilos[tx.tipo]

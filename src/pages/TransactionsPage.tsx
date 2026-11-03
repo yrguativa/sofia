@@ -38,13 +38,15 @@ function TransactionsContent({ mesInicial, moneda }: { mesInicial: string; moned
       listBolsillos(),
     ])
     const pagadosPresupuesto = new Map<string, string>()
+    const bolsillosPresupuesto = new Set<string>()
     for (const e of entries) {
       if (e.transaction_id && e.cuenta_id) {
         const cuenta = accounts.find((a) => a.id === e.cuenta_id)
         if (cuenta) pagadosPresupuesto.set(e.transaction_id, cuenta.nombre)
+        if (e.metodo_pago === 'bolsillo') bolsillosPresupuesto.add(e.transaction_id)
       }
     }
-    return { accounts, categories, transactions, pagadosPresupuesto, bolsillos }
+    return { accounts, categories, transactions, pagadosPresupuesto, bolsillos, bolsillosPresupuesto }
   }, [mes])
 
   const { data, error, reload } = useLoad(loader)
@@ -141,6 +143,7 @@ function TransactionsContent({ mesInicial, moneda }: { mesInicial: string; moned
                   categories={data.categories}
                   moneda={moneda}
                   presupuesto={colorPorCuenta(data.pagadosPresupuesto.get(t.id))}
+                  esBolsillo={data.bolsillosPresupuesto.has(t.id) || !!t.bolsillo_id}
                   onClick={() => setEditing(t)}
                 />
               ))}
