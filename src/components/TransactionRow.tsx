@@ -29,14 +29,14 @@ export function TransactionRow({ tx, accounts, categories, moneda, presupuesto, 
   const signo = tx.tipo === 'ingreso' ? '+' : tx.tipo === 'gasto' ? '−' : ''
   const esBolsillo = !!tx.bolsillo_id
   const color =
-    esBolsillo ? 'text-red-600' : tx.tipo === 'ingreso' ? 'text-emerald-600' : tx.tipo === 'gasto' ? 'text-red-600' : 'text-zinc-700'
-  const estiloIcono = esBolsillo ? 'bg-red-50 text-red-600' : estilos[tx.tipo]
+    esBolsillo ? 'text-orange-600' : tx.tipo === 'ingreso' ? 'text-emerald-600' : tx.tipo === 'gasto' ? 'text-red-600' : 'text-zinc-700'
+  const estiloIcono = esBolsillo ? 'bg-orange-50 text-orange-600' : estilos[tx.tipo]
 
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`group flex w-full items-center gap-3 rounded-[22px] p-3 pr-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md active:scale-[0.99] ${tx.tipo === 'gasto' ? 'bg-red-50' : tx.tipo === 'ingreso' ? 'bg-emerald-50' : fondosPago[presupuesto ?? 'neutro']}`}
+      className={`group flex w-full items-center gap-3 rounded-[22px] p-3 pr-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md active:scale-[0.99] ${esBolsillo ? 'bg-orange-50' : tx.tipo === 'gasto' ? 'bg-red-50' : tx.tipo === 'ingreso' ? 'bg-emerald-50' : fondosPago[presupuesto ?? 'neutro']}`}
     >
       <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${estiloIcono}`}>
         <Icon className="h-5 w-5">{esBolsillo ? icons.bolsillo : tipoMovimientoIcon[tx.tipo]}</Icon>
