@@ -1,4 +1,4 @@
-import { formatMoney } from '../lib/format'
+import { formatMoney, humanizeDateTime } from '../lib/format'
 import type { Account, Category, Transaction } from '../lib/types'
 import { Icon } from './icons'
 import { icons, tipoMovimientoIcon } from './iconPaths'
@@ -47,6 +47,7 @@ export function TransactionRow({ tx, accounts, categories, moneda, presupuesto, 
           {origen?.nombre}
           {tx.nota ? ` · ${tx.nota}` : ''}
         </span>
+        <span className="block text-[10px] text-zinc-400">{humanizeDateTime(tx.creado_en)}</span>
       </span>
       <span className={`whitespace-nowrap font-semibold ${color}`}>
         {signo}

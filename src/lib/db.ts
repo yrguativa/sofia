@@ -83,7 +83,7 @@ export async function deleteCategory(id: string) {
 export async function listTransactions(range?: { from: string; to: string }): Promise<Transaction[]> {
   const base = supabase
     .from('transactions')
-    .select('id,account_id,cuenta_destino_id,category_id,bolsillo_id,monto,tipo,fecha,nota')
+    .select('id,account_id,cuenta_destino_id,category_id,bolsillo_id,monto,tipo,fecha,nota,creado_en')
     .order('fecha', { ascending: false })
     .order('creado_en', { ascending: false })
   const query = range ? base.gte('fecha', range.from).lt('fecha', range.to) : base
@@ -341,7 +341,7 @@ export async function listDebts(): Promise<Debt[]> {
   const rows = unwrap<Array<Omit<Debt, 'monto_total' | 'tasa_interes' | 'cuota_mensual' | 'saldo_pendiente'> & { monto_total: string | number; tasa_interes: string | number; cuota_mensual: string | number; saldo_pendiente: string | number }>>(
     await supabase
       .from('debts')
-      .select('id,nombre,monto_total,tasa_interes,cuotas,cuota_mensual,fecha_inicio,saldo_pendiente,plan_item_id')
+      .select('id,nombre,monto_total,tasa_interes,cuotas,cuota_mensual,fecha_inicio,saldo_pendiente,plan_item_id,abonos')
       .order('creado_en'),
   )
   return rows.map((r) => ({
@@ -350,6 +350,7 @@ export async function listDebts(): Promise<Debt[]> {
     tasa_interes: Number(r.tasa_interes),
     cuota_mensual: Number(r.cuota_mensual),
     saldo_pendiente: Number(r.saldo_pendiente),
+    abonos: (r.abonos as { mes: number; monto: number; tipo: 'cuota' | 'plazo' }[]) ?? [],
   }))
 }
 
@@ -367,6 +368,13 @@ export async function deleteDebt(id: string) {
 
 export async function updateDebtSaldo(id: string, saldo: number) {
   check(await supabase.from('debts').update({ saldo_pendiente: saldo }).eq('id', id))
+}
+
+export async function addDebtAbono(debtId: string, abono: { mes: number; monto: number; tipo: 'cuota' | 'plazo' }) {
+  const rows = unwrap<Array<{ abonos: unknown }>>(await supabase.from('debts').select('abonos').eq('id', debtId))
+  const current = (rows[0]?.abonos as { mes: number; monto: number; tipo: 'cuota' | 'plazo' }[]) ?? []
+  const nuevos = [...current.filter((a) => a.mes !== abono.mes), abono]
+  check(await supabase.from('debts').update({ abonos: nuevos }).eq('id', debtId))
 }
 
 

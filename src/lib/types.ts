@@ -44,6 +44,7 @@ export type Transaction = {
   tipo: TxType
   fecha: string
   nota: string | null
+  creado_en?: string
 }
 
 export type TransactionInput = Omit<Transaction, 'id'>
@@ -105,6 +106,7 @@ export type Debt = {
   fecha_inicio: string
   saldo_pendiente: number
   plan_item_id: string | null
+  abonos: { mes: number; monto: number; tipo: 'cuota' | 'plazo' }[]
 }
 
 export type DebtInput = Omit<Debt, 'id' | 'saldo_pendiente'> & { saldo_pendiente?: number }

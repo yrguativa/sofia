@@ -32,6 +32,7 @@ import {
   listIngresosAdicionales,
   listEntries,
   listPlanItems,
+  addDebtAbono,
   saveBolsillo,
   saveIngresoAdicional,
   updateBolsilloSaldo,
@@ -407,12 +408,16 @@ function BudgetsContent({ mesInicial }: { mesInicial: string }) {
             entry={pagando}
             moneda={moneda}
             accounts={data.accounts}
-            onConfirm={async (metodo, cuentaId, bolsilloId) => {
+            onConfirm={async (metodo, cuentaId, bolsilloId, tipoDeuda) => {
               const id = pagando.id
               try {
                 await setEntryStatus(id, metodo, cuentaId)
                 if (metodo === 'bolsillo' && bolsilloId && pagando) {
                   await updateBolsilloSaldo(bolsilloId, pagando.monto)
+                }
+                // Si el item esta vinculado a una deuda y es abono, registrar abono
+                if (metodo && pagando.debt_id && tipoDeuda === 'abono') {
+                  await addDebtAbono(pagando.debt_id, { mes: 1, monto: pagando.monto, tipo: 'cuota' })
                 }
                 setPagando(null)
                 reload()
@@ -584,9 +589,10 @@ function PagoForm({
   entry: BudgetEntry
   moneda: string
   accounts: Account[]
-  onConfirm: (metodo: string | null, cuentaId: string | null, bolsilloId: string | null) => Promise<string | null>
+  onConfirm: (metodo: string | null, cuentaId: string | null, bolsilloId: string | null, tipoDeuda: 'normal' | 'abono') => Promise<string | null>
 }) {
   const [metodo, setMetodo] = useState<string | null>(entry.metodo_pago)
+  const [tipoDeuda, setTipoDeuda] = useState<'normal' | 'abono'>('normal')
   const [cuentaId, setCuentaId] = useState<string | null>(entry.cuenta_id)
   const [bolsillos, setBolsillos] = useState<Bolsillo[]>([])
   const [bolsilloId, setBolsilloId] = useState<string | null>(null)
@@ -638,7 +644,7 @@ function PagoForm({
   async function confirmar() {
     setSaving(true)
     setError(null)
-    const msg = await onConfirm(metodo, metodo ? cuentaId : null, metodo === 'bolsillo' ? bolsilloId : null)
+    const msg = await onConfirm(metodo, metodo ? cuentaId : null, metodo === 'bolsillo' ? bolsilloId : null, tipoDeuda)
     if (!msg && metodo === 'bolsillo' && bolsilloId) {
       // saldo ya actualizado en onConfirm
     }
@@ -713,6 +719,28 @@ function PagoForm({
             ))}
           </select>
         </Field>
+      )}
+
+      {entry.debt_id && metodo && (
+        <div className="rounded-[20px] bg-mist p-4">
+          <p className="mb-2 text-xs text-zinc-500">Tipo de pago de deuda</p>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => setTipoDeuda('normal')}
+              className={`rounded-full px-3 py-2 text-sm font-medium transition ${tipoDeuda === 'normal' ? 'bg-ink text-white' : 'bg-white text-ink'}`}
+            >
+              Pago normal
+            </button>
+            <button
+              type="button"
+              onClick={() => setTipoDeuda('abono')}
+              className={`rounded-full px-3 py-2 text-sm font-medium transition ${tipoDeuda === 'abono' ? 'bg-ink text-white' : 'bg-white text-ink'}`}
+            >
+              Abono
+            </button>
+          </div>
+        </div>
       )}
 
       {metodo === 'bolsillo' && cuentaId && (

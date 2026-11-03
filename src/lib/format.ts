@@ -45,6 +45,23 @@ export function monthOf(isoDate: string) {
   return isoDate.slice(0, 7)
 }
 
+export function humanizeDateTime(iso: string | undefined): string {
+  if (!iso) return ''
+  const d = new Date(iso)
+  const now = new Date()
+  const diffMs = now.getTime() - d.getTime()
+  const diffMin = Math.round(diffMs / 60000)
+  const diffH = Math.round(diffMs / 3600000)
+  const diffD = Math.round(diffMs / 86400000)
+  const hora = d.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })
+  if (diffMin < 1) return `Ahora · ${hora}`
+  if (diffMin < 60) return `Hace ${diffMin} min · ${hora}`
+  if (diffH < 24) return `Hace ${diffH} h · ${hora}`
+  if (diffD === 1) return `Ayer · ${hora}`
+  if (diffD < 7) return `Hace ${diffD} días · ${hora}`
+  return d.toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' }) + ` · ${hora}`
+}
+
 export function monthLabel(ym: string) {
   const [y, m] = ym.split('-').map(Number)
   const label = new Date(y, m - 1, 1).toLocaleDateString('es-CO', { month: 'long', year: 'numeric' })

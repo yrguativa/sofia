@@ -136,6 +136,7 @@ function DebtForm({ onSaved }: { onSaved: () => void }) {
           fecha_inicio: fechaInicio,
           saldo_pendiente: m,
           plan_item_id: null,
+          abonos: [],
         },
       )
       onSaved()

@@ -9,7 +9,7 @@ import { MoneyInput } from '../components/MoneyInput'
 import { parseMoney } from '../lib/money'
 import { useLoad } from '../lib/useLoad'
 import type { Debt } from '../lib/types'
-import { amortizarConAbonos, calcularAhorroInteres, type Abono, type TipoAbono } from '../lib/abonos'
+import { amortizarConAbonos, calcularAhorroInteres, type TipoAbono } from '../lib/abonos'
 import { Sheet } from '../components/Sheet'
 
 function mesDeuda(fechaInicio: string, mes: number): string {
@@ -30,7 +30,6 @@ export function DebtDetailPage() {
   const [abonoTipo, setAbonoTipo] = useState<TipoAbono>('plazo')
   const [cuotaModal, setCuotaModal] = useState<number | null>(null)
   const [cuotaCuentaId, setCuotaCuentaId] = useState<string>('')
-  const [abonos, setAbonos] = useState<Abono[]>([])
   const [savingAbono, setSavingAbono] = useState(false)
 
   const loader = useCallback(async () => {
@@ -46,6 +45,7 @@ export function DebtDetailPage() {
   if (!data) return <Loading />
 
   const { profile, debt, accounts } = data
+  const abonos = debt.abonos ?? []
   const moneda = profile.moneda
   const pct = debt.monto_total > 0 ? ((debt.monto_total - debt.saldo_pendiente) / debt.monto_total) * 100 : 0
   const resultado = amortizarConAbonos(debt.monto_total, debt.tasa_interes, debt.cuotas, abonos)
@@ -61,17 +61,56 @@ export function DebtDetailPage() {
     const monto = parseMoney(abonoMonto)
     if (!(monto > 0) || abonoModal === null) return
     setSavingAbono(true)
-    // Remove existing abono for this month if any
-    const nuevosAbonos = abonos.filter((a) => a.mes !== abonoModal)
-    nuevosAbonos.push({ mes: abonoModal, monto, tipo: abonoTipo })
-    setAbonos(nuevosAbonos)
-    setAbonoModal(null)
-    setAbonoMonto('')
-    setSavingAbono(false)
+    try {
+      const nuevosAbonos = abonos.filter((a) => a.mes !== abonoModal)
+      nuevosAbonos.push({ mes: abonoModal, monto, tipo: abonoTipo })
+      await saveDebt(
+        {
+          nombre: debt.nombre,
+          monto_total: debt.monto_total,
+          tasa_interes: debt.tasa_interes,
+          cuotas: debt.cuotas,
+          cuota_mensual: debt.cuota_mensual,
+          fecha_inicio: debt.fecha_inicio,
+          saldo_pendiente: Math.max(0, debt.saldo_pendiente - monto),
+          plan_item_id: debt.plan_item_id,
+          abonos: nuevosAbonos,
+        },
+        debt.id,
+      )
+      setAbonoModal(null)
+      setAbonoMonto('')
+      reload()
+    } catch (err) {
+      window.alert(err instanceof Error ? err.message : 'No se pudo guardar el abono.')
+    } finally {
+      setSavingAbono(false)
+    }
   }
 
-  function eliminarAbono(mes: number) {
-    setAbonos((prev) => prev.filter((a) => a.mes !== mes))
+  async function eliminarAbono(mes: number) {
+    const abono = abonos.find((a) => a.mes === mes)
+    const monto = abono?.monto ?? 0
+    const nuevosAbonos = abonos.filter((a) => a.mes !== mes)
+    try {
+      await saveDebt(
+        {
+          nombre: debt.nombre,
+          monto_total: debt.monto_total,
+          tasa_interes: debt.tasa_interes,
+          cuotas: debt.cuotas,
+          cuota_mensual: debt.cuota_mensual,
+          fecha_inicio: debt.fecha_inicio,
+          saldo_pendiente: debt.saldo_pendiente + monto,
+          plan_item_id: debt.plan_item_id,
+          abonos: nuevosAbonos,
+        },
+        debt.id,
+      )
+      reload()
+    } catch (err) {
+      window.alert(err instanceof Error ? err.message : 'No se pudo eliminar el abono.')
+    }
   }
 
   return (
@@ -465,6 +504,7 @@ function DebtEditForm({ debt, onSaved }: { debt: Debt; onSaved: () => void }) {
           fecha_inicio: fechaInicio,
           saldo_pendiente: sp,
           plan_item_id: debt.plan_item_id,
+          abonos: debt.abonos,
         },
         debt.id,
       )
