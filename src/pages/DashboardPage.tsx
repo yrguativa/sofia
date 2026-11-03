@@ -5,7 +5,7 @@ import { Icon } from '../components/icons'
 import { icons, tipoCuentaIcon } from '../components/iconPaths'
 import { TransactionRow } from '../components/TransactionRow'
 import { Card, Empty, ErrorText, Loading, SectionTitle } from '../components/ui'
-import { getProfile, listAccounts, listCategories, listTransactions } from '../lib/db'
+import { getProfile, listAccounts, listBolsillos, listCategories, listTransactions } from '../lib/db'
 import { computeBalances, summarize } from '../lib/finance'
 import { currentMonth, formatMoney, monthLabel, monthOf, shiftMonth } from '../lib/format'
 import { useLoad } from '../lib/useLoad'
@@ -21,13 +21,14 @@ export function DashboardPage() {
   const { user } = useAuth()
 
   const loader = useCallback(async () => {
-    const [profile, accounts, categories, transactions] = await Promise.all([
+    const [profile, accounts, categories, transactions, bolsillos] = await Promise.all([
       getProfile(),
       listAccounts(),
       listCategories(),
       listTransactions(),
+      listBolsillos(),
     ])
-    return { profile, accounts, categories, transactions }
+    return { profile, accounts, categories, transactions, bolsillos }
   }, [])
 
   const { data, error } = useLoad(loader)
@@ -35,7 +36,7 @@ export function DashboardPage() {
   if (error) return <ErrorText>{error}</ErrorText>
   if (!data) return <Loading />
 
-  const { profile, accounts, categories, transactions } = data
+  const { profile, accounts, categories, transactions, bolsillos } = data
   const moneda = profile.moneda
   const balances = computeBalances(accounts, transactions)
   const total = accounts.reduce((sum, a) => sum + (balances[a.id] ?? 0), 0)
@@ -131,22 +132,37 @@ export function DashboardPage() {
           </Empty>
         ) : (
           <div className="flex flex-col gap-3 lg:flex-col">
-            {accounts.map((a) => (
-              <div key={a.id} className="min-w-44 shrink-0 rounded-[24px] bg-white p-5 shadow-sm lg:flex lg:min-w-0 lg:items-center lg:justify-between">
-                <div className="flex items-center gap-3">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-full bg-acid text-ink">
-                    <Icon className="h-5 w-5">{tipoCuentaIcon[a.tipo]}</Icon>
-                  </span>
-                  <div>
-                    <span className="mb-1 inline-block rounded-full bg-mist px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-ink">
-                      {a.tipo}
-                    </span>
-                    <p className="truncate font-medium text-zinc-600">{a.nombre}</p>
+            {accounts.map((a) => {
+              const bolsillosDeCuenta = bolsillos.filter((b) => b.account_id === a.id)
+              return (
+                <div key={a.id} className="min-w-44 shrink-0 rounded-[24px] bg-white p-5 shadow-sm lg:flex lg:min-w-0 lg:flex-col lg:items-stretch lg:justify-start">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className="flex h-10 w-10 items-center justify-center rounded-full bg-acid text-ink">
+                        <Icon className="h-5 w-5">{tipoCuentaIcon[a.tipo]}</Icon>
+                      </span>
+                      <div>
+                        <span className="mb-1 inline-block rounded-full bg-mist px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-ink">
+                          {a.tipo}
+                        </span>
+                        <p className="truncate font-medium text-zinc-600">{a.nombre}</p>
+                      </div>
+                    </div>
+                    <p className="text-lg font-bold text-ink">{formatMoney(balances[a.id] ?? 0, moneda)}</p>
                   </div>
+                  {bolsillosDeCuenta.length > 0 && (
+                    <div className="mt-3 flex flex-col gap-1 border-t border-zinc-100 pt-2">
+                      {bolsillosDeCuenta.map((b) => (
+                        <div key={b.id} className="flex items-center justify-between text-xs">
+                          <span className="text-zinc-500">Bolsillo: {b.nombre}</span>
+                          <span className="font-medium text-ink">{formatMoney(b.saldo, moneda)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
-                <p className="mt-1 text-lg font-bold text-ink lg:mt-0">{formatMoney(balances[a.id] ?? 0, moneda)}</p>
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
       </section>
