@@ -8,32 +8,32 @@ const pasos = [
   {
     titulo: 'Configura tu salario',
     texto: 'En Más → Salario registra tu sueldo y desde qué mes aplica. Sin salario no se puede generar el presupuesto.',
-    imagen: '/onboarding/01-salario.png',
+    imagen: `${import.meta.env.BASE_URL}onboarding/01-salario.png`,
   },
   {
     titulo: 'Crea tus categorías',
     texto: 'En Más → Categorías agrega las categorías de tus gastos e ingresos (ej. Arriendo, Servicios).',
-    imagen: '/onboarding/02-categorias.png',
+    imagen: `${import.meta.env.BASE_URL}onboarding/02-categorias.png`,
   },
   {
     titulo: 'Arma tu plantilla',
     texto: 'En Plantilla define tus gastos recurrentes: fijos, variables, deudas y ahorros. Puedes usar % del salario.',
-    imagen: '/onboarding/03-plantilla.png',
+    imagen: `${import.meta.env.BASE_URL}onboarding/03-plantilla.png`,
   },
   {
     titulo: 'Genera el presupuesto del mes',
     texto: 'En Presupuesto configura el salario del mes y pulsa "Generar desde plantilla". Luego marca cada ítem como pagado.',
-    imagen: '/onboarding/04-presupuesto.png',
+    imagen: `${import.meta.env.BASE_URL}onboarding/04-presupuesto.png`,
   },
   {
     titulo: 'Activa la verificación en dos pasos',
     texto: 'Ya está activa. Guarda el código TOTP en KeePass o en la app Contraseñas/Aegis para entrar.',
-    imagen: '/onboarding/05-seguridad.png',
+    imagen: `${import.meta.env.BASE_URL}onboarding/05-seguridad.png`,
   },
   {
     titulo: 'Usa los atajos (opcional)',
     texto: 'En Más → Atajos iOS genera un token para registrar movimientos rápidos desde tu iPhone.',
-    imagen: '/onboarding/06-atajos.png',
+    imagen: `${import.meta.env.BASE_URL}onboarding/06-atajos.png`,
   },
 ]
 
