@@ -59,6 +59,7 @@ export const icons = {
       <path d="M9 12l2 2 4-4" />
     </>
   ),
+  bolsillo: <path d="M4 8h16v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8zm0 0 2-3h12l2 3M9 12h6" />,
   llave: (
     <>
       <circle cx="8" cy="15" r="4" />

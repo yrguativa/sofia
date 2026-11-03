@@ -154,7 +154,10 @@ export function DashboardPage() {
                     <div className="mt-3 flex flex-col gap-1 border-t border-zinc-100 pt-2">
                       {bolsillosDeCuenta.map((b) => (
                         <div key={b.id} className="flex items-center justify-between text-xs">
-                          <span className="text-zinc-500">Bolsillo: {b.nombre}</span>
+                          <span className="flex items-center gap-1 text-zinc-500">
+                            <Icon className="h-3.5 w-3.5">{icons.bolsillo}</Icon>
+                            {b.nombre}
+                          </span>
                           <span className="font-medium text-ink">{formatMoney(b.saldo, moneda)}</span>
                         </div>
                       ))}
