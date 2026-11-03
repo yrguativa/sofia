@@ -205,17 +205,19 @@ function BudgetsContent({ mesInicial }: { mesInicial: string }) {
         )}
       </Card>
 
-      <div className="mb-6 flex flex-col gap-2">
-        <button type="button" onClick={generar} className={primaryBtn}>
-          Generar desde plantilla
-        </button>
-        {aviso && (
-          <p className="text-sm text-emerald-700" role="status">
-            {aviso}
-          </p>
-        )}
-        {actionError && <ErrorText>{actionError}</ErrorText>}
-      </div>
+      {data.entries.length === 0 && (
+        <div className="mb-6 flex flex-col gap-2">
+          <button type="button" onClick={generar} className={primaryBtn}>
+            Generar desde plantilla
+          </button>
+        </div>
+      )}
+      {aviso && (
+        <p className="mb-4 text-sm text-emerald-700" role="status">
+          {aviso}
+        </p>
+      )}
+      {actionError && <ErrorText>{actionError}</ErrorText>}
 
       {data.entries.length > 0 && (
         <Card className="mb-6">
