@@ -225,7 +225,11 @@ export function DebtDetailPage() {
             </p>
           </div>
         )}
-        <div className="mb-4 grid grid-cols-2 gap-3 text-sm lg:grid-cols-4">
+        <div className="mb-4 grid grid-cols-2 gap-3 text-sm lg:grid-cols-5">
+          <div className="rounded-[20px] bg-mist p-3">
+            <p className="text-xs text-zinc-500">Tasa anual</p>
+            <p className="font-semibold text-ink">{debt.tasa_interes}%</p>
+          </div>
           <div className="rounded-[20px] bg-mist p-3">
             <p className="text-xs text-zinc-500">Cuota mensual</p>
             <p className="font-semibold text-ink">{formatMoney(resultado.cuota, moneda)}</p>
