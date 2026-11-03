@@ -413,7 +413,7 @@ function BudgetsContent({ mesInicial }: { mesInicial: string }) {
             onConfirm={async (metodo, cuentaId, bolsilloId, tipoDeuda) => {
               const id = pagando.id
               try {
-                await setEntryStatus(id, metodo, cuentaId)
+                await setEntryStatus(id, metodo, cuentaId, bolsilloId)
                 if (metodo === 'bolsillo' && bolsilloId && pagando) {
                   await updateBolsilloSaldo(bolsilloId, pagando.monto)
                 }
