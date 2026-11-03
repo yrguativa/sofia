@@ -48,7 +48,8 @@ export function DebtDetailPage() {
   const abonos = debt.abonos ?? []
   const moneda = profile.moneda
   const pct = debt.monto_total > 0 ? ((debt.monto_total - debt.saldo_pendiente) / debt.monto_total) * 100 : 0
-  const paidCuotas = Math.min(debt.cuotas, Math.max(0, Math.round((debt.monto_total - debt.saldo_pendiente) / (debt.cuota_mensual || 1))))
+  const mesesHastaSeptiembre = (2026 - new Date(debt.fecha_inicio).getFullYear()) * 12 + (8 - new Date(debt.fecha_inicio).getMonth()) + 1
+  const paidCuotas = Math.min(debt.cuotas, Math.max(0, mesesHastaSeptiembre), Math.max(0, Math.round((debt.monto_total - debt.saldo_pendiente) / (debt.cuota_mensual || 1))))
   const resultado = amortizarConAbonos(debt.monto_total, debt.tasa_interes, debt.cuotas, abonos)
   const ahorroInteres = abonos.length > 0 ? calcularAhorroInteres(debt.monto_total, debt.tasa_interes, debt.cuotas, abonos) : 0
 
