@@ -14,6 +14,7 @@ function tx(partial: Partial<Transaction>): Transaction {
     account_id: 'a',
     cuenta_destino_id: null,
     category_id: null,
+    bolsillo_id: null,
     monto: 0,
     tipo: 'gasto',
     fecha: '2026-11-02',

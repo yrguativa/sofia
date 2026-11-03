@@ -3,7 +3,7 @@ import { Sheet } from '../components/Sheet'
 import { TransactionForm } from '../components/TransactionForm'
 import { TransactionRow } from '../components/TransactionRow'
 import { Empty, ErrorText, Loading, MonthSwitcher, PageHeader, primaryBtn } from '../components/ui'
-import { listAccounts, listCategories, getProfile, listEntries, listTransactions } from '../lib/db'
+import { listAccounts, listBolsillos, listCategories, getProfile, listEntries, listTransactions } from '../lib/db'
 import { currentMonth, dayLabel, mesDePresupuesto, monthLabel, monthRange, shiftMonth, formatMoney } from '../lib/format'
 import { useLoad } from '../lib/useLoad'
 import type { Transaction, TxType } from '../lib/types'
@@ -30,11 +30,12 @@ function TransactionsContent({ mesInicial, moneda }: { mesInicial: string; moned
   const [filtro, setFiltro] = useState<Filtro>('todos')
 
   const loader = useCallback(async () => {
-    const [accounts, categories, transactions, entries] = await Promise.all([
+    const [accounts, categories, transactions, entries, bolsillos] = await Promise.all([
       listAccounts(),
       listCategories(),
       listTransactions(monthRange(mes)),
       listEntries(mes),
+      listBolsillos(),
     ])
     const pagadosPresupuesto = new Map<string, string>()
     for (const e of entries) {
@@ -43,7 +44,7 @@ function TransactionsContent({ mesInicial, moneda }: { mesInicial: string; moned
         if (cuenta) pagadosPresupuesto.set(e.transaction_id, cuenta.nombre)
       }
     }
-    return { accounts, categories, transactions, pagadosPresupuesto }
+    return { accounts, categories, transactions, pagadosPresupuesto, bolsillos }
   }, [mes])
 
   const { data, error, reload } = useLoad(loader)
@@ -164,6 +165,7 @@ function TransactionsContent({ mesInicial, moneda }: { mesInicial: string; moned
           <TransactionForm
             accounts={data.accounts}
             categories={data.categories}
+            bolsillos={data.bolsillos}
             initial={editing === 'new' ? null : editing}
             onSaved={close}
           />

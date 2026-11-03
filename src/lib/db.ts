@@ -83,7 +83,7 @@ export async function deleteCategory(id: string) {
 export async function listTransactions(range?: { from: string; to: string }): Promise<Transaction[]> {
   const base = supabase
     .from('transactions')
-    .select('id,account_id,cuenta_destino_id,category_id,monto,tipo,fecha,nota')
+    .select('id,account_id,cuenta_destino_id,category_id,bolsillo_id,monto,tipo,fecha,nota')
     .order('fecha', { ascending: false })
     .order('creado_en', { ascending: false })
   const query = range ? base.gte('fecha', range.from).lt('fecha', range.to) : base

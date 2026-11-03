@@ -353,6 +353,7 @@ export function DebtDetailPage() {
                     account_id: cuotaCuentaId,
                     cuenta_destino_id: null,
                     category_id: null,
+                    bolsillo_id: null,
                     monto: cuota,
                     tipo: 'gasto',
                     fecha: debt.fecha_inicio,

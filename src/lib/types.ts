@@ -39,6 +39,7 @@ export type Transaction = {
   account_id: string
   cuenta_destino_id: string | null
   category_id: string | null
+  bolsillo_id: string | null
   monto: number
   tipo: TxType
   fecha: string
