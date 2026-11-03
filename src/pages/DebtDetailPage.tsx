@@ -243,10 +243,6 @@ export function DebtDetailPage() {
             <p className="font-semibold text-ink">{resultado.meses}</p>
           </div>
         </div>
-        {paidCuotas === 0 ? (
-          <p className="py-6 text-center text-sm text-zinc-500">Aún no hay cuotas pagadas.</p>
-        ) : (
-        <>
         <div className="hidden max-h-96 overflow-x-auto overflow-y-auto md:block">
           <table className="w-full text-sm">
             <thead className="sticky top-0 bg-white">
@@ -261,7 +257,7 @@ export function DebtDetailPage() {
               </tr>
             </thead>
             <tbody>
-              {resultado.amortizacion.filter((a) => a.mes <= paidCuotas).map((a) => {
+              {resultado.amortizacion.map((a) => {
                 const abonoAplicado = abonos.find((ab) => ab.mes === a.mes)
                 return (
                   <tr key={a.mes} className={`border-b border-zinc-100 ${a.mes <= paidCuotas ? 'bg-emerald-50/60' : abonoAplicado ? 'bg-emerald-50' : ''}`}>
@@ -310,7 +306,7 @@ export function DebtDetailPage() {
           </table>
         </div>
         <div className="max-h-96 space-y-3 overflow-y-auto md:hidden">
-          {resultado.amortizacion.filter((a) => a.mes <= paidCuotas).map((a) => {
+          {resultado.amortizacion.map((a) => {
             const abonoAplicado = abonos.find((ab) => ab.mes === a.mes)
             return (
               <div key={a.mes} className={`rounded-[18px] p-4 shadow-sm ${a.mes <= paidCuotas ? 'bg-emerald-50/60' : abonoAplicado ? 'bg-emerald-50' : 'bg-mist'}`}>
@@ -371,8 +367,6 @@ export function DebtDetailPage() {
             )
           })}
         </div>
-        </>
-        )}
       </Card>
 
       {cuotaModal !== null && (
