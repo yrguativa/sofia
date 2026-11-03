@@ -48,6 +48,7 @@ export function DebtDetailPage() {
   const abonos = debt.abonos ?? []
   const moneda = profile.moneda
   const pct = debt.monto_total > 0 ? ((debt.monto_total - debt.saldo_pendiente) / debt.monto_total) * 100 : 0
+  const paidCuotas = Math.min(debt.cuotas, Math.max(0, Math.round((debt.monto_total - debt.saldo_pendiente) / (debt.cuota_mensual || 1))))
   const resultado = amortizarConAbonos(debt.monto_total, debt.tasa_interes, debt.cuotas, abonos)
   const ahorroInteres = abonos.length > 0 ? calcularAhorroInteres(debt.monto_total, debt.tasa_interes, debt.cuotas, abonos) : 0
 
@@ -159,7 +160,7 @@ export function DebtDetailPage() {
           <div className="mb-2 h-3 w-full overflow-hidden rounded-full bg-zinc-100">
             <div className="h-full rounded-full bg-emerald-500" style={{ width: `${Math.min(100, pct)}%` }} />
           </div>
-          <p className="text-xs text-zinc-500">{Math.round(pct)}% pagado</p>
+          <p className="text-xs text-zinc-500">{Math.round(pct)}% pagado · {paidCuotas} de {debt.cuotas} cuotas</p>
 
           <div className="mt-4 flex gap-2">
             <button type="button" onClick={() => setEditing(true)} className={`${secondaryBtn} flex-1 gap-2`}>
@@ -259,7 +260,7 @@ export function DebtDetailPage() {
               {resultado.amortizacion.map((a) => {
                 const abonoAplicado = abonos.find((ab) => ab.mes === a.mes)
                 return (
-                  <tr key={a.mes} className={`border-b border-zinc-100 ${abonoAplicado ? 'bg-emerald-50' : ''}`}>
+                  <tr key={a.mes} className={`border-b border-zinc-100 ${a.mes <= paidCuotas ? 'bg-emerald-50/60' : abonoAplicado ? 'bg-emerald-50' : ''}`}>
                     <td className="py-2">{a.mes}: {mesDeuda(debt.fecha_inicio, a.mes)}</td>
                     <td className="py-2 text-right">{formatMoney(a.cuota, moneda)}</td>
                     <td className="py-2 text-right">{formatMoney(a.capital - a.abono, moneda)}</td>
@@ -306,7 +307,7 @@ export function DebtDetailPage() {
           {resultado.amortizacion.map((a) => {
             const abonoAplicado = abonos.find((ab) => ab.mes === a.mes)
             return (
-              <div key={a.mes} className={`rounded-[18px] p-4 shadow-sm ${abonoAplicado ? 'bg-emerald-50' : 'bg-mist'}`}>
+              <div key={a.mes} className={`rounded-[18px] p-4 shadow-sm ${a.mes <= paidCuotas ? 'bg-emerald-50/60' : abonoAplicado ? 'bg-emerald-50' : 'bg-mist'}`}>
                 <div className="mb-2 flex items-center justify-between">
                   <p className="font-semibold text-ink">{a.mes}: {mesDeuda(debt.fecha_inicio, a.mes)}</p>
                   {abonoAplicado ? (
