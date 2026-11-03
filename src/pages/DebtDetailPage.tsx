@@ -295,7 +295,7 @@ export function DebtDetailPage() {
                             </button>
                             <button
                               type="button"
-                              onClick={() => { setAbonoModal(a.mes); setAbonoMonto(''); setAbonoTipo('plazo') }}
+                              onClick={() => { setAbonoModal(Math.min(paidCuotas + 1, debt.cuotas)); setAbonoMonto(''); setAbonoTipo('plazo') }}
                               className="rounded-full bg-ink px-3 py-1 text-xs font-medium text-acid transition active:scale-95"
                             >
                               Abono
@@ -338,7 +338,7 @@ export function DebtDetailPage() {
                       </button>
                       <button
                         type="button"
-                        onClick={() => { setAbonoModal(a.mes); setAbonoMonto(''); setAbonoTipo('plazo') }}
+                        onClick={() => { setAbonoModal(Math.min(paidCuotas + 1, debt.cuotas)); setAbonoMonto(''); setAbonoTipo('plazo') }}
                         className="rounded-full bg-ink px-3 py-1 text-xs font-medium text-acid transition active:scale-95"
                       >
                         Abono
