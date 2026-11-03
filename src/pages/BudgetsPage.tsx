@@ -20,6 +20,7 @@ import {
   secondaryBtn,
 } from '../components/ui'
 import {
+  createBudgetEntry,
   deleteEntry,
   deleteIngresoAdicional,
   generarMes,
@@ -43,7 +44,7 @@ import { montoDesde, resumenPresupuesto } from '../lib/presupuesto'
 import { parseMoney } from '../lib/money'
 import { currentMonth, formatMoney, mesDePresupuesto, monthLabel, shiftMonth } from '../lib/format'
 import { useLoad } from '../lib/useLoad'
-import { grupos, type Account, type Bolsillo, type BudgetEntry, type MontoTipo } from '../lib/types'
+import { grupos, type Account, type Bolsillo, type BudgetEntry, type MontoTipo, type PlanGrupo } from '../lib/types'
 
 function porcentaje(parte: number, total: number) {
   return total > 0 ? Math.round((parte / total) * 100) : 0
@@ -63,6 +64,7 @@ function BudgetsContent({ mesInicial }: { mesInicial: string }) {
   const [agruparPor, setAgruparPor] = useState<'grupo' | 'categoria'>('grupo')
   const [colapsadas, setColapsadas] = useState<Set<string>>(new Set())
   const [editing, setEditing] = useState<BudgetEntry | null>(null)
+  const [nuevoItem, setNuevoItem] = useState(false)
   const [pagando, setPagando] = useState<BudgetEntry | null>(null)
   const [ingresoSheet, setIngresoSheet] = useState(false)
   const [aviso, setAviso] = useState<string | null>(null)
@@ -145,9 +147,14 @@ function BudgetsContent({ mesInicial }: { mesInicial: string }) {
       <PageHeader
         title="Presupuesto"
         action={
-          <Link to="/plantilla" className={`${secondaryBtn} py-2 text-sm`}>
-            Plantilla
-          </Link>
+          <div className="flex gap-2">
+            <button type="button" onClick={() => setNuevoItem(true)} className={`${primaryBtn} py-2 text-sm`}>
+              + Ítem
+            </button>
+            <Link to="/plantilla" className={`${secondaryBtn} py-2 text-sm`}>
+              Plantilla
+            </Link>
+          </div>
         }
       />
 
@@ -371,6 +378,21 @@ function BudgetsContent({ mesInicial }: { mesInicial: string }) {
             mes={mes}
             onSaved={() => {
               setIngresoSheet(false)
+              reload()
+            }}
+          />
+        </Sheet>
+      )}
+
+      {nuevoItem && (
+        <Sheet title="Nuevo ítem del mes" onClose={() => setNuevoItem(false)}>
+          <NuevoItemForm
+            mes={mes}
+            salario={salario}
+            categories={data.categories}
+            moneda={moneda}
+            onSaved={() => {
+              setNuevoItem(false)
               reload()
             }}
           />
@@ -872,6 +894,107 @@ function IngresoRapidoForm({ mes, onSaved }: { mes: string; onSaved: () => void 
       {error && <ErrorText>{error}</ErrorText>}
       <button type="submit" disabled={saving} className={primaryBtn}>
         {saving ? 'Guardando…' : 'Guardar'}
+      </button>
+    </form>
+  )
+}
+
+function NuevoItemForm({
+  mes,
+  salario,
+  categories,
+  moneda,
+  onSaved,
+}: {
+  mes: string
+  salario: number
+  categories: { id: string; nombre: string; icono: string | null; tipo: string }[]
+  moneda: string
+  onSaved: () => void
+}) {
+  const [nombre, setNombre] = useState('')
+  const [grupo, setGrupo] = useState<PlanGrupo>('Gastos fijos')
+  const [categoriaId, setCategoriaId] = useState('')
+  const [tipo, setTipo] = useState<MontoTipo>('valor')
+  const [valor, setValor] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const numero = tipo === 'valor' ? parseMoney(valor) : Number(valor.replace(',', '.'))
+  const monto = numero >= 0 ? montoDesde(tipo, numero, salario) : 0
+
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    setError(null)
+    if (!(numero >= 0)) return setError('El valor debe ser un número positivo.')
+    if (tipo === 'porcentaje' && numero > 100) return setError('El porcentaje no puede superar 100.')
+    setSaving(true)
+    try {
+      await createBudgetEntry(mes, {
+        nombre: nombre.trim(),
+        grupo,
+        categoria_id: categoriaId || null,
+        tipo_monto: tipo,
+        valor: numero,
+        monto,
+      })
+      onSaved()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No se pudo crear.')
+      setSaving(false)
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      <Field label="Nombre">
+        <input value={nombre} onChange={(e) => setNombre(e.target.value)} maxLength={60} className={inputCls} required />
+      </Field>
+      <Field label="Grupo">
+        <select value={grupo} onChange={(e) => setGrupo(e.target.value as PlanGrupo)} className={inputCls}>
+          {grupos.map((g) => (
+            <option key={g} value={g}>
+              {g}
+            </option>
+          ))}
+        </select>
+      </Field>
+      <Field label="Categoría">
+        <select value={categoriaId} onChange={(e) => setCategoriaId(e.target.value)} className={inputCls}>
+          <option value="">Sin categoría</option>
+          {categories.filter((c) => c.tipo === 'gasto').map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.icono ? `${c.icono} ` : ''}
+              {c.nombre}
+            </option>
+          ))}
+        </select>
+      </Field>
+      <div className="grid grid-cols-2 gap-1 rounded-xl bg-slate-100 p-1">
+        {(['valor', 'porcentaje'] as const).map((t) => (
+          <button
+            key={t}
+            type="button"
+            onClick={() => setTipo(t)}
+            className={`rounded-lg py-2 text-sm font-medium ${tipo === t ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}
+          >
+            {t === 'valor' ? 'Valor fijo' : 'Porcentaje'}
+          </button>
+        ))}
+      </div>
+      <Field label={tipo === 'porcentaje' ? 'Porcentaje del salario (%)' : 'Valor'}>
+        {tipo === 'valor' ? (
+          <MoneyInput value={valor} onChange={setValor} className={inputCls} required />
+        ) : (
+          <input inputMode="decimal" value={valor} onChange={(e) => setValor(e.target.value)} className={inputCls} required />
+        )}
+      </Field>
+      <p className="text-sm text-slate-600">
+        Monto de este mes: <span className="font-semibold text-slate-900">{formatMoney(monto, moneda)}</span>
+      </p>
+      {error && <ErrorText>{error}</ErrorText>}
+      <button type="submit" disabled={saving} className={primaryBtn}>
+        {saving ? 'Guardando…' : 'Agregar al mes'}
       </button>
     </form>
   )

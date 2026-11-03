@@ -205,6 +205,33 @@ export async function updateEntry(
   check(await supabase.from('budget_entries').update(patch).eq('id', id))
 }
 
+export async function createBudgetEntry(
+  mes: string,
+  input: {
+    nombre: string
+    grupo: string
+    categoria_id: string | null
+    tipo_monto: MontoTipo
+    valor: number
+    monto: number
+  },
+) {
+  const user_id = await currentUserId()
+  check(
+    await supabase.from('budget_entries').insert({
+      user_id,
+      mes: `${mes}-01`,
+      plan_item_id: null,
+      nombre: input.nombre.trim(),
+      grupo: input.grupo,
+      categoria_id: input.categoria_id,
+      tipo_monto: input.tipo_monto,
+      valor: input.valor,
+      monto: input.monto,
+    }),
+  )
+}
+
 export async function deleteEntry(id: string) {
   check(await supabase.from('budget_entries').delete().eq('id', id))
 }
