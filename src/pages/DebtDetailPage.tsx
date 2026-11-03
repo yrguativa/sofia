@@ -277,6 +277,8 @@ export function DebtDetailPage() {
                           >
                             Quitar
                           </button>
+                        ) : a.mes <= paidCuotas ? (
+                          <span className="text-xs text-emerald-600">Pagada</span>
                         ) : (
                           <>
                             <button
@@ -318,6 +320,8 @@ export function DebtDetailPage() {
                     >
                       Quitar
                     </button>
+                  ) : a.mes <= paidCuotas ? (
+                    <span className="text-xs text-emerald-600">Pagada</span>
                   ) : (
                     <div className="flex gap-1">
                       <button
