@@ -408,6 +408,7 @@ function BudgetsContent({ mesInicial }: { mesInicial: string }) {
             entry={pagando}
             moneda={moneda}
             accounts={data.accounts}
+            debtId={pagando.debt_id ?? data.planItems.find((p) => p.id === pagando.plan_item_id)?.debt_id ?? null}
             onConfirm={async (metodo, cuentaId, bolsilloId, tipoDeuda) => {
               const id = pagando.id
               try {
@@ -416,8 +417,9 @@ function BudgetsContent({ mesInicial }: { mesInicial: string }) {
                   await updateBolsilloSaldo(bolsilloId, pagando.monto)
                 }
                 // Si el item esta vinculado a una deuda y es abono, registrar abono
-                if (metodo && pagando.debt_id && tipoDeuda === 'abono') {
-                  await addDebtAbono(pagando.debt_id, { mes: 1, monto: pagando.monto, tipo: 'cuota' })
+                const debtId = pagando.debt_id ?? data?.planItems.find((p) => p.id === pagando.plan_item_id)?.debt_id
+                if (metodo && debtId && tipoDeuda === 'abono') {
+                  await addDebtAbono(debtId, { mes: 1, monto: pagando.monto, tipo: 'cuota' })
                 }
                 setPagando(null)
                 reload()
@@ -584,11 +586,13 @@ function PagoForm({
   entry,
   moneda,
   accounts,
+  debtId,
   onConfirm,
 }: {
   entry: BudgetEntry
   moneda: string
   accounts: Account[]
+  debtId?: string | null
   onConfirm: (metodo: string | null, cuentaId: string | null, bolsilloId: string | null, tipoDeuda: 'normal' | 'abono') => Promise<string | null>
 }) {
   const [metodo, setMetodo] = useState<string | null>(entry.metodo_pago)
@@ -721,7 +725,7 @@ function PagoForm({
         </Field>
       )}
 
-      {entry.debt_id && metodo && (
+      {debtId && metodo && (
         <div className="rounded-[20px] bg-mist p-4">
           <p className="mb-2 text-xs text-zinc-500">Tipo de pago de deuda</p>
           <div className="grid grid-cols-2 gap-2">
