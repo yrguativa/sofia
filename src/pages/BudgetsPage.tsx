@@ -543,7 +543,7 @@ function EntryRow({
         ) : (
           <button type="button" onClick={onPagar} className={`${primaryBtn} gap-1.5 px-3 py-1.5 text-xs`}>
             <Icon className="h-3.5 w-3.5">{icons.salario}</Icon>
-            Pagar
+            Ejecutar
           </button>
         )}
       </div>
