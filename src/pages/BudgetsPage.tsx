@@ -388,7 +388,7 @@ function BudgetsContent({ mesInicial }: { mesInicial: string }) {
               try {
                 await setEntryStatus(id, metodo, cuentaId)
                 if (metodo === 'bolsillo' && bolsilloId && pagando) {
-                  await updateBolsilloSaldo(bolsilloId, -pagando.monto)
+                  await updateBolsilloSaldo(bolsilloId, pagando.monto)
                 }
                 setPagando(null)
                 reload()
