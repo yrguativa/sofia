@@ -151,7 +151,7 @@ function BudgetsContent({ mesInicial }: { mesInicial: string }) {
           <div className="flex gap-2">
             <button type="button" onClick={() => setNuevoItem(true)} className={`${primaryBtn} py-2 text-sm`}>
               <Icon className="h-4 w-4">{icons.plus}</Icon>
-              Agregar un ítem al presupuesto de este mes
+              Agregar ítem
             </button>
             <Link to="/plantilla" className={`${secondaryBtn} py-2 text-sm`}>
               Plantilla
