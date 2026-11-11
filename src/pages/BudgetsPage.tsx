@@ -164,7 +164,7 @@ function BudgetsContent({ mesInicial }: { mesInicial: string }) {
         label={monthLabel(mes)}
         onPrev={() => setMes(shiftMonth(mes, -1))}
         onNext={() => setMes(shiftMonth(mes, 1))}
-        canNext={mes < currentMonth()}
+        canNext={mes < shiftMonth(currentMonth(), 1)}
       />
 
       <SalarioCard
