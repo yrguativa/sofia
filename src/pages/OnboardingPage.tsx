@@ -437,11 +437,31 @@ function PasoPlantilla({ planItems, categories, moneda, onChanged }: {
   const [tipo, setTipo] = useState<'valor' | 'porcentaje'>('valor')
   const [valor, setValor] = useState('')
   const [categoriaId, setCategoriaId] = useState('')
+  const [editingId, setEditingId] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const catsGasto = categories.filter((c) => c.tipo === 'gasto')
 
-  async function agregar(e: FormEvent<HTMLFormElement>) {
+  function limpiar() {
+    setNombre('')
+    setGrupo('Gastos fijos')
+    setTipo('valor')
+    setValor('')
+    setCategoriaId('')
+    setEditingId(null)
+  }
+
+  function editar(item: (typeof planItems)[number]) {
+    setEditingId(item.id)
+    setNombre(item.nombre)
+    setGrupo(item.grupo)
+    setTipo(item.tipo_monto)
+    setValor(String(item.valor))
+    setCategoriaId(item.categoria_id ?? '')
+    setError(null)
+  }
+
+  async function guardar(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setError(null)
     const numero = tipo === 'valor' ? parseMoney(valor) : Number(valor.replace(',', '.'))
@@ -450,19 +470,22 @@ function PasoPlantilla({ planItems, categories, moneda, onChanged }: {
     if (tipo === 'porcentaje' && numero > 100) return setError('El porcentaje no puede superar 100.')
     setSaving(true)
     try {
-      await savePlanItem({
-        nombre: nombre.trim(),
-        grupo,
-        categoria_id: categoriaId || null,
-        tipo_monto: tipo,
-        valor: numero,
-        activo: true,
-        orden: planItems.length,
-        debt_id: null,
-        goal_id: null,
-      })
-      setNombre('')
-      setValor('')
+      const editando = planItems.find((p) => p.id === editingId)
+      await savePlanItem(
+        {
+          nombre: nombre.trim(),
+          grupo,
+          categoria_id: categoriaId || null,
+          tipo_monto: tipo,
+          valor: numero,
+          activo: editando?.activo ?? true,
+          orden: editando?.orden ?? planItems.length,
+          debt_id: editando?.debt_id ?? null,
+          goal_id: editando?.goal_id ?? null,
+        },
+        editingId ?? undefined,
+      )
+      limpiar()
       await onChanged()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No se pudo guardar.')
@@ -477,7 +500,8 @@ function PasoPlantilla({ planItems, categories, moneda, onChanged }: {
         <h2 className="text-xl font-bold text-ink">Arma tu plantilla</h2>
         <p className="mt-1 text-sm text-zinc-600">Tus gastos recurrentes. Usa % del salario para el diezmo o el ahorro.</p>
       </div>
-      <form onSubmit={agregar} className="flex flex-col gap-3 rounded-2xl bg-mist p-4">
+      <form onSubmit={guardar} className="flex flex-col gap-3 rounded-2xl bg-mist p-4">
+        <p className="text-sm font-semibold text-ink">{editingId ? 'Editar gasto de la plantilla' : 'Nuevo gasto de la plantilla'}</p>
         <Field label="Nombre del gasto">
           <input value={nombre} onChange={(e) => setNombre(e.target.value)} maxLength={60} placeholder="Ej. Arriendo" className={inputCls} />
         </Field>
@@ -502,7 +526,7 @@ function PasoPlantilla({ planItems, categories, moneda, onChanged }: {
               onClick={() => setTipo(t)}
               className={`rounded-lg py-2 text-sm font-medium ${tipo === t ? 'bg-ink text-white' : 'text-zinc-500'}`}
             >
-              {t === 'valor' ? 'Valor fijo' : '% salario'}
+              {t === 'valor' ? 'Valor fijo' : '% valor porcentaje'}
             </button>
           ))}
         </div>
@@ -513,23 +537,37 @@ function PasoPlantilla({ planItems, categories, moneda, onChanged }: {
         </Field>
         {error && <ErrorText>{error}</ErrorText>}
         <button type="submit" disabled={saving} className={primaryBtn}>
-          {saving ? 'Agregando…' : 'Agregar a mi plantilla'}
+          {saving ? 'Guardando…' : editingId ? 'Guardar cambios' : 'Agregar a mi plantilla'}
         </button>
+        {editingId && (
+          <button type="button" onClick={limpiar} disabled={saving} className={`${secondaryBtn} w-full`}>
+            Cancelar edición
+          </button>
+        )}
       </form>
       {planItems.length === 0 ? (
         <Empty>Agrega tu primer gasto fijo, por ejemplo el arriendo.</Empty>
       ) : (
         <ul className="flex flex-col gap-2">
           {planItems.slice(0, 8).map((i) => (
-            <li key={i.id} className="flex items-center justify-between rounded-2xl bg-mist px-4 py-3 text-sm">
-              <span className="text-ink">{i.nombre} <span className="text-xs text-zinc-500">· {i.grupo} · {i.tipo_monto === 'porcentaje' ? `${i.valor}%` : formatMoney(i.valor, moneda)}</span></span>
-              <button
-                type="button"
-                onClick={async () => { if (window.confirm(`¿Eliminar "${i.nombre}"?`)) { await deletePlanItem(i.id); await onChanged() } }}
-                className="text-sm font-medium text-red-600"
-              >
-                Quitar
-              </button>
+            <li key={i.id} className={`flex items-center justify-between gap-2 rounded-2xl px-4 py-3 text-sm ${editingId === i.id ? 'bg-ink text-white' : 'bg-mist'}`}>
+              <span className={editingId === i.id ? 'text-white' : 'text-ink'}>{i.nombre} <span className={`text-xs ${editingId === i.id ? 'text-zinc-300' : 'text-zinc-500'}`}>· {i.grupo} · {i.tipo_monto === 'porcentaje' ? `${i.valor}%` : formatMoney(i.valor, moneda)}</span></span>
+              <span className="flex shrink-0 items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => editar(i)}
+                  className={`text-sm font-medium ${editingId === i.id ? 'text-acid' : 'text-ink underline underline-offset-4'}`}
+                >
+                  Editar
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => { if (window.confirm(`¿Eliminar "${i.nombre}"?`)) { if (editingId === i.id) limpiar(); await deletePlanItem(i.id); await onChanged() } }}
+                  className="text-sm font-medium text-red-600"
+                >
+                  Quitar
+                </button>
+              </span>
             </li>
           ))}
         </ul>
@@ -540,13 +578,31 @@ function PasoPlantilla({ planItems, categories, moneda, onChanged }: {
 }
 
 /* ---------- Paso 4: Presupuesto ---------- */
-function PasoPresupuesto({ datos, onChanged }: {
+function PasoPresupuesto({ datos, mes, onMesChange, onChanged }: {
   datos: Datos
+  mes: string
+  onMesChange: (m: string) => Promise<void>
   onChanged: () => Promise<void>
 }) {
   const [working, setWorking] = useState(false)
+  const [changing, setChanging] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [ok, setOk] = useState<string | null>(null)
+  const sincronizado = datos.mes === mes
+
+  async function seleccionar(v: string) {
+    if (!v || v === mes) return
+    setError(null)
+    setOk(null)
+    setChanging(true)
+    try {
+      await onMesChange(v)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No se pudo cambiar de mes.')
+    } finally {
+      setChanging(false)
+    }
+  }
 
   async function generar() {
     setError(null)
