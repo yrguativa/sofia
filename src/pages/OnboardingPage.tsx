@@ -44,10 +44,11 @@ export function OnboardingPage() {
   const [avisoPaso, setAvisoPaso] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [finalizing, setFinalizing] = useState(false)
+  const [mesSel, setMesSel] = useState<string | null>(null)
 
-  const cargar = useCallback(async () => {
+  const cargar = useCallback(async (mesOverride?: string) => {
     const profile = await getProfile()
-    const mes = mesDePresupuesto(new Date(), profile.dia_pago)
+    const mes = mesOverride ?? mesDePresupuesto(new Date(), profile.dia_pago)
     const [salarios, categories, planItems, salarioMes, entries] = await Promise.all([
       listSalarioHistorial(),
       listCategories(),
@@ -64,12 +65,18 @@ export function OnboardingPage() {
     return () => { vivo = false }
   }, [cargar])
 
-  async function recargar() {
+  async function recargar(mesOverride?: string) {
     try {
-      setDatos(await cargar())
+      setDatos(await cargar(mesOverride ?? mesSel ?? undefined))
     } catch (e) {
       setError(e instanceof Error ? e.message : 'No se pudo cargar.')
     }
+  }
+
+  async function cambiarMes(m: string) {
+    if (!m) return
+    setMesSel(m)
+    await recargar(m)
   }
 
   async function finalizar() {
@@ -127,7 +134,7 @@ export function OnboardingPage() {
         {paso === 1 && <PasoSalario mes={datos.mes} salarios={datos.salarios} moneda={datos.profile.moneda} onChanged={recargar} />}
         {paso === 2 && <PasoCategorias categories={datos.categories} onChanged={recargar} />}
         {paso === 3 && <PasoPlantilla onChanged={recargar} planItems={datos.planItems} categories={datos.categories} moneda={datos.profile.moneda} />}
-        {paso === 4 && <PasoPresupuesto datos={datos} onChanged={recargar} />}
+        {paso === 4 && <PasoPresupuesto datos={datos} mes={mesSel ?? datos.mes} onMesChange={cambiarMes} onChanged={() => recargar()} />}
         {paso === 5 && <PasoFinal onFinish={finalizar} finalizing={finalizing} />}
 
         {avisoPaso && <ErrorText>{avisoPaso}</ErrorText>}
@@ -617,9 +624,9 @@ function PasoPresupuesto({ datos, mes, onMesChange, onChanged }: {
     }
     setWorking(true)
     try {
-      const creados = await generarMes(datos.mes)
+      const creados = await generarMes(mes)
       await onChanged()
-      setOk(creados > 0 ? `Listo: se generaron ${creados} ítems de ${monthLabel(datos.mes)}.` : 'Ese mes ya estaba generado.')
+      setOk(creados > 0 ? `Listo: se generaron ${creados} ítems de ${monthLabel(mes)}.` : 'Ese mes ya estaba generado.')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No se pudo generar.')
     } finally {
@@ -630,18 +637,29 @@ function PasoPresupuesto({ datos, mes, onMesChange, onChanged }: {
   return (
     <div className="flex flex-col gap-4 text-center">
       <h2 className="text-xl font-bold text-ink">Genera tu primer presupuesto</h2>
+      <Field label="Mes del presupuesto">
+        <input
+          type="month"
+          value={mes}
+          max={currentMonth()}
+          onChange={(e) => seleccionar(e.target.value)}
+          className={`${inputCls} text-center`}
+        />
+      </Field>
       <p className="text-sm text-zinc-600">
-        Mes <strong>{monthLabel(datos.mes)}</strong> · Salario{' '}
-        <strong>{datos.salarioMes == null ? 'sin configurar' : formatMoney(datos.salarioMes, datos.profile.moneda)}</strong>
+        Mes <strong>{monthLabel(mes)}</strong> · Salario{' '}
+        <strong>{!sincronizado ? 'cargando…' : datos.salarioMes == null ? 'sin configurar' : formatMoney(datos.salarioMes, datos.profile.moneda)}</strong>
       </p>
       <div className="rounded-2xl bg-mist p-4 text-sm text-zinc-600">
-        {datos.entriesCount === 0
-          ? `Tienes ${datos.planItems.length} ítems en plantilla listos para generar.`
-          : `Ya tienes ${datos.entriesCount} ítems generados este mes. Puedes continuar.`}
+        {!sincronizado || changing
+          ? 'Cargando mes…'
+          : datos.entriesCount === 0
+            ? `Tienes ${datos.planItems.length} ítems en plantilla listos para generar.`
+            : `Ya tienes ${datos.entriesCount} ítems generados este mes. Puedes continuar.`}
       </div>
       {error && <ErrorText>{error}</ErrorText>}
       {ok && <p className="text-sm text-emerald-700" role="status">{ok}</p>}
-      <button type="button" onClick={generar} disabled={working} className={primaryBtn}>
+      <button type="button" onClick={generar} disabled={working || changing || !sincronizado} className={primaryBtn}>
         {working ? 'Generando…' : datos.entriesCount === 0 ? 'Generar presupuesto del mes' : 'Volver a generar'}
       </button>
     </div>
