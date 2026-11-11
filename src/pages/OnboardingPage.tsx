@@ -89,11 +89,9 @@ export function OnboardingPage() {
   if (!datos) return <><PageHeader title="Bienvenido" /><Loading /></>
 
   const totalPasos = 6
-  const propias = datos.categories.filter((c) => c.user_id !== null)
 
   function puedeAvanzar(): string | null {
     if (paso === 1 && datos!.salarios.length === 0) return 'Registra tu salario para continuar.'
-    if (paso === 2 && propias.length === 0) return 'Crea al menos una categoría para continuar.'
     if (paso === 3 && datos!.planItems.length === 0) return 'Agrega al menos un gasto a tu plantilla para continuar.'
     if (paso === 4 && datos!.entriesCount === 0) return 'Pulsa "Generar presupuesto" para continuar.'
     return null
@@ -303,20 +301,30 @@ function PasoCategorias({ categories, onChanged }: {
 }) {
   const [nombre, setNombre] = useState('')
   const [tipo, setTipo] = useState<CategoryType>('gasto')
+  const [icono, setIcono] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const propias = categories.filter((c) => c.user_id !== null)
+  const existeSalario = categories.some((c) => c.nombre.toLowerCase() === 'salario' && c.tipo === 'ingreso')
+  const existeAhorro = categories.some((c) => c.nombre.toLowerCase() === 'ahorro' && c.tipo === 'gasto')
 
-  const sugeridas = ['Arriendo', 'Servicios', 'Mercado', 'Transporte']
+  const sugeridasGasto: { nombre: string; icono: string }[] = [
+    { nombre: 'Arriendo', icono: '🏠' },
+    { nombre: 'Servicios', icono: '💡' },
+    { nombre: 'Mercado', icono: '🛒' },
+    { nombre: 'Transporte', icono: '🚌' },
+  ]
+  const iconosRapidos = ['🏠', '🛒', '🚌', '💡', '🐶', '🩺', '🎬', '🛍️', '📦', '💰']
 
-  async function agregar(n: string, t: CategoryType) {
+  async function agregar(n: string, t: CategoryType, ic: string | null = null) {
     const limpio = n.trim()
     if (!limpio) return
     setSaving(true)
     setError(null)
     try {
-      await createCategory(limpio, t, null)
+      await createCategory(limpio, t, ic?.trim() || null)
       setNombre('')
+      setIcono('')
       await onChanged()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No se pudo crear.')
@@ -329,23 +337,41 @@ function PasoCategorias({ categories, onChanged }: {
     <div className="flex flex-col gap-4">
       <div className="text-center">
         <h2 className="text-xl font-bold text-ink">Crea tus categorías</h2>
-        <p className="mt-1 text-sm text-zinc-600">Crea al menos una. Toca una sugerencia para agregarla rápido.</p>
+        <p className="mt-1 text-sm text-zinc-600">Por defecto ya tienes <strong>💼 Salario</strong> (ingreso) y <strong>🐷 Ahorro</strong> (gasto). Si quieres, agrega tus gastos (opcional).</p>
       </div>
       <div className="flex flex-wrap gap-2">
-        {sugeridas.map((s) => (
+        <button
+          type="button"
+          disabled={saving || existeSalario}
+          onClick={() => agregar('Salario', 'ingreso', '💼')}
+          title={existeSalario ? 'Ya tienes la categoría Salario' : 'Agregar categoría Salario (ingreso)'}
+          className="rounded-full bg-ink px-4 py-2 text-sm font-medium text-white disabled:opacity-40"
+        >
+          {existeSalario ? '✓ 💼 Salario (ingreso)' : '+ 💼 Salario (ingreso)'}
+        </button>
+        <button
+          type="button"
+          disabled={saving || existeAhorro}
+          onClick={() => agregar('Ahorro', 'gasto', '🐷')}
+          title={existeAhorro ? 'Ya tienes la categoría Ahorro' : 'Agregar categoría Ahorro (gasto)'}
+          className="rounded-full bg-ink px-4 py-2 text-sm font-medium text-white disabled:opacity-40"
+        >
+          {existeAhorro ? '✓ 🐷 Ahorro (gasto)' : '+ 🐷 Ahorro (gasto)'}
+        </button>
+        {sugeridasGasto.map((s) => (
           <button
-            key={s}
+            key={s.nombre}
             type="button"
-            disabled={saving || propias.some((p) => p.nombre.toLowerCase() === s.toLowerCase())}
-            onClick={() => agregar(s, 'gasto')}
+            disabled={saving || propias.some((p) => p.nombre.toLowerCase() === s.nombre.toLowerCase())}
+            onClick={() => agregar(s.nombre, 'gasto', s.icono)}
             className="rounded-full bg-mist px-4 py-2 text-sm font-medium text-ink disabled:opacity-40"
           >
-            + {s}
+            + {s.icono} {s.nombre}
           </button>
         ))}
       </div>
-      <form onSubmit={(e) => { e.preventDefault(); agregar(nombre, tipo) }} className="flex flex-col gap-3 rounded-2xl bg-mist p-4">
-        <div className="grid gap-3 sm:grid-cols-[1fr_140px]">
+      <form onSubmit={(e) => { e.preventDefault(); agregar(nombre, tipo, icono) }} className="flex flex-col gap-3 rounded-2xl bg-mist p-4">
+        <div className="grid gap-3 sm:grid-cols-[1fr_140px_90px]">
           <Field label="Nueva categoría">
             <input value={nombre} onChange={(e) => setNombre(e.target.value)} maxLength={40} placeholder="Ej. Mascotas" className={inputCls} />
           </Field>
@@ -355,6 +381,22 @@ function PasoCategorias({ categories, onChanged }: {
               <option value="ingreso">Ingreso</option>
             </select>
           </Field>
+          <Field label="Icono">
+            <input value={icono} onChange={(e) => setIcono(e.target.value)} maxLength={4} placeholder="🐶" className={`${inputCls} text-center`} aria-label="Icono" />
+          </Field>
+        </div>
+        <div className="flex flex-wrap gap-1.5">
+          {iconosRapidos.map((em) => (
+            <button
+              key={em}
+              type="button"
+              onClick={() => setIcono(em)}
+              aria-label={`Usar icono ${em}`}
+              className={`flex h-9 w-9 items-center justify-center rounded-full text-lg ${icono === em ? 'bg-ink text-white' : 'bg-white'}`}
+            >
+              {em}
+            </button>
+          ))}
         </div>
         {error && <ErrorText>{error}</ErrorText>}
         <button type="submit" disabled={saving || !nombre.trim()} className={primaryBtn}>
@@ -367,7 +409,7 @@ function PasoCategorias({ categories, onChanged }: {
         <ul className="flex flex-col gap-2">
           {propias.map((c) => (
             <li key={c.id} className="flex items-center justify-between rounded-2xl bg-mist px-4 py-3 text-sm">
-              <span className="text-ink">{c.nombre} <span className="text-xs text-zinc-500">· {c.tipo}</span></span>
+              <span className="text-ink">{c.icono ? `${c.icono} ` : ''}{c.nombre} <span className="text-xs text-zinc-500">· {c.tipo}</span></span>
               <button
                 type="button"
                 onClick={async () => { if (window.confirm(`¿Eliminar "${c.nombre}"?`)) { await deleteCategory(c.id); await onChanged() } }}
